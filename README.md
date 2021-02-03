@@ -1,5 +1,5 @@
 # GyverLamp2
-![Logo](/docs/banner.png)
+![Logo](/docs/banner2.png)
 
 ## GyverLamp2
 Отличия от первой версии GyverLamp:
