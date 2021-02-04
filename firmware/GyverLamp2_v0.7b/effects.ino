@@ -88,13 +88,14 @@ void effectsRoutine() {
         }
         break;
       case 5: // =================================== ЧАСТИЦЫ ===================================
-        FastLED.clear();
+        //FastLED.clear();
+        FOR_i(0, cfg.length * cfg.width) leds[i].fadeToBlackBy(70);
         if (cfg.deviceType > 1) {
           uint16_t rndVal = 0;
           FOR_i(0, thisScale / 8) {
-            int thisY = inoise16(i * 100000000ul + (now.weekMs << 5) * CUR_PRES.speed / 255);
+            int thisY = inoise16(i * 100000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
             thisY = map(thisY, 20000, 45000, 0, cfg.length);
-            int thisX = inoise16(i * 100000000ul + 2000000000ul + (now.weekMs << 5) * CUR_PRES.speed / 255);
+            int thisX = inoise16(i * 100000000ul + 2000000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
             thisX = map(thisX, 20000, 45000, 0, cfg.width);
             rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
 
@@ -104,7 +105,7 @@ void effectsRoutine() {
         } else {
           uint16_t rndVal = 0;
           FOR_i(0, thisScale / 8) {
-            int thisPos = inoise16(i * 100000000ul + (now.weekMs << 5) * CUR_PRES.speed / 255);
+            int thisPos = inoise16(i * 100000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
             thisPos = map(thisPos, 20000, 45000, 0, cfg.length);
             rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
             if (thisPos >= 0 && thisPos < cfg.length) leds[thisPos] = CHSV(CUR_PRES.rnd ? rndVal : CUR_PRES.color, 255, 255);
