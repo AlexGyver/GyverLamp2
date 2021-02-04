@@ -1,15 +1,14 @@
 void effectsRoutine() {
   static timerMillis effTmr(30, true);
   if (cfg.state && effTmr.isReady()) {
-    FastLED.setBrightness(getBright());
-
     int thisLength = getLength();
     byte thisScale = getScale();
     int thisWidth = (cfg.deviceType > 1) ? cfg.width : 1;
 
+    FastLED.setBrightness(getBright());
+
     switch (CUR_PRES.effect) {
       case 1: // =================================== ПЕРЛИН ===================================
-        FastLED.clear();
         if (cfg.deviceType > 1) {
           FOR_j(0, cfg.length) {
             FOR_i(0, cfg.width) {
@@ -32,7 +31,6 @@ void effectsRoutine() {
         }
         break;
       case 2: // ==================================== ЦВЕТ ====================================
-        FastLED.clear();
         {
           fill_solid(leds, cfg.length * thisWidth, CHSV(CUR_PRES.color, thisScale, CUR_PRES.min));
           CRGB thisColor = CHSV(CUR_PRES.color, thisScale, CUR_PRES.max);
@@ -45,7 +43,6 @@ void effectsRoutine() {
         }
         break;
       case 3: // ================================= СМЕНА ЦВЕТА =================================
-        FastLED.clear();
         {
           CRGB thisColor = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], (now.weekMs >> 5) * CUR_PRES.speed / 255, CUR_PRES.min, LINEARBLEND);
           fill_solid(leds, cfg.length * thisWidth, thisColor);
@@ -59,7 +56,6 @@ void effectsRoutine() {
         }
         break;
       case 4: // ================================== ГРАДИЕНТ ==================================
-        FastLED.clear();
         if (CUR_PRES.fromCenter) {
           FOR_i(cfg.length / 2, cfg.length) {
             byte bright = 255;
@@ -88,15 +84,14 @@ void effectsRoutine() {
         }
         break;
       case 5: // =================================== ЧАСТИЦЫ ===================================
-        //FastLED.clear();
         FOR_i(0, cfg.length * cfg.width) leds[i].fadeToBlackBy(70);
         if (cfg.deviceType > 1) {
           uint16_t rndVal = 0;
           FOR_i(0, thisScale / 8) {
             int thisY = inoise16(i * 100000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
-            thisY = map(thisY, 20000, 45000, 0, cfg.length);
+            thisY = map(thisY, 10000, 55000, 0, cfg.length);
             int thisX = inoise16(i * 100000000ul + 2000000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
-            thisX = map(thisX, 20000, 45000, 0, cfg.width);
+            thisX = map(thisX, 10000, 55000, 0, cfg.width);
             rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
 
             if (thisY >= 0 && thisY < cfg.length && thisX >= 0 && thisX < cfg.width)
@@ -106,14 +101,13 @@ void effectsRoutine() {
           uint16_t rndVal = 0;
           FOR_i(0, thisScale / 8) {
             int thisPos = inoise16(i * 100000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
-            thisPos = map(thisPos, 20000, 45000, 0, cfg.length);
+            thisPos = map(thisPos, 10000, 55000, 0, cfg.length);
             rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
             if (thisPos >= 0 && thisPos < cfg.length) leds[thisPos] = CHSV(CUR_PRES.rnd ? rndVal : CUR_PRES.color, 255, 255);
           }
         }
         break;
       case 6: // ==================================== ОГОНЬ ====================================
-        FastLED.clear();
         {
           if (cfg.deviceType > 1) {         // 2D огонь
             fireRoutine();

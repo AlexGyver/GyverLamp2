@@ -31,8 +31,8 @@ const char WiFiPassword[] = "12345678";
 // ------------ Прочее -------------
 #define MIC_VCC D6          // питание микрофона
 #define PHOT_VCC D5         // питание фоторезистора
-#define EE_TOUT 303000      // таймаут сохранения епром после изменения, мс
-#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
+#define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
+//#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 40           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 
@@ -89,6 +89,7 @@ void setup() {
   startWiFi();          // старт вайфай
   setupTime();          // выставляем время
   setupADC();           // настраиваем анализ
+  presetRotation(true); // форсировать смену режима
 }
 
 void loop() {
@@ -97,7 +98,7 @@ void loop() {
   parsing();          // ловим данные
   yield();
   checkEEupdate();    // сохраняем епром
-  presetRotation();   // смена режимов
+  presetRotation(0);  // смена режимов по расписанию
   effectsRoutine();   // мигаем
   yield();
   button();           // проверяем кнопку

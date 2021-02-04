@@ -58,9 +58,7 @@ void checkGroup() {
   }
   if (flag) {
     EEPROM.put(0, cfg);
-    EEPROM.commit();
-    delay(100);
-    ESP.reset();
+    EEPROM.commit();    
   }
   DEBUG("group: ");
   DEBUGLN(cfg.group);

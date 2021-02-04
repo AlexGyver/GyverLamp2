@@ -1,5 +1,5 @@
-void presetRotation() {
-  if (cfg.rotation && now.newMin()) {   // если автосмена и новая минута
+void presetRotation(bool force) {
+  if (cfg.rotation && (now.newMin() || force)) {   // если автосмена и новая минута
     if (cfg.rotRnd) {                   // случайная
       cfg.curPreset = trnd.fromMin(cfg.rotPeriod, cfg.presetAmount);
       DEBUG("Rnd changed to ");

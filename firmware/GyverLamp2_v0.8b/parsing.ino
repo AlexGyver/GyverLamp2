@@ -91,6 +91,7 @@ void parsing() {
             }
           }
           EE_updatePreset();
+          presetRotation(true); // форсировать смену режима
           break;
 
         case 3: DEBUGLN("Dawn");
@@ -111,6 +112,7 @@ void parsing() {
           }
           break;
       }
+      FastLED.clear();    // на всякий случай
     }
   }
 }

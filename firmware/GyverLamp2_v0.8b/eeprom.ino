@@ -17,7 +17,7 @@ void EE_startup() {
   EEPROM.get(sizeof(cfg) + sizeof(dawn), preset);
 
   // запускаем всё
-  trnd.setChannel(cfg.group);
+  //trnd.setChannel(cfg.group);
   FastLED.setMaxPowerInVoltsAndMilliamps(STRIP_VOLT, cfg.maxCur * 100);
 }
 
