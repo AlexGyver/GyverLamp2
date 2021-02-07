@@ -15,6 +15,7 @@
 #define GL_REACT_LEN 3
 #define GL_SLAVE 0
 #define GL_MASTER 1
+#define MAX_PRESETS 25      // макс количество режимов
 
 // ------------------- МАКРО --------------------
 #ifdef DEBUG_SERIAL
@@ -62,8 +63,8 @@ struct Config {
   byte workFrom = 0;      // часы работы (0,1.. 23)
   byte workTo = 0;        // часы работы (0,1.. 23)
 
-  int length = 100;       // длина ленты
-  int width = 1;          // ширина матрицы
+  int16_t length = 100;       // длина ленты
+  int16_t width = 1;          // ширина матрицы
 
   byte state = 1;         // состояние 0 выкл, 1 вкл
   byte group = 1;         // группа девайса (1-10)
@@ -72,10 +73,10 @@ struct Config {
   byte presetAmount = 1;  // количество режимов
   byte manualOff = 0;     // выключали вручную?
   int8_t curPreset = 0;   // текущий режим
-  int minLight = 0;       // мин освещённость
-  int maxLight = 1023;    // макс освещённость
-  char ssid[16];          // логин wifi
-  char pass[16];          // пароль wifi
+  int16_t minLight = 0;       // мин освещённость
+  int16_t maxLight = 1023;    // макс освещённость
+  char ssid[32];          // логин wifi
+  char pass[32];          // пароль wifi
 };
 
 #define PRES_SIZE 13

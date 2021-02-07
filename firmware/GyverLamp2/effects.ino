@@ -1,11 +1,16 @@
 void effectsRoutine() {
   static timerMillis effTmr(30, true);
+  static byte prevEff = 255;
   if (cfg.state && effTmr.isReady()) {
     int thisLength = getLength();
     byte thisScale = getScale();
     int thisWidth = (cfg.deviceType > 1) ? cfg.width : 1;
 
     FastLED.setBrightness(getBright());
+    if (prevEff != CUR_PRES.effect) {
+      FastLED.clear();
+      prevEff = CUR_PRES.effect;
+    }
 
     switch (CUR_PRES.effect) {
       case 1: // =================================== ПЕРЛИН ===================================
@@ -134,7 +139,7 @@ void effectsRoutine() {
         }
         break;
       case 7: // ================================== КОНФЕТТИ ==================================
-        FOR_i(0, thisScale >> 3) {
+        FOR_i(0, (thisScale >> 3) + 1) {
           byte x = random(0, cfg.length * cfg.width);
           if (leds[x] == CRGB(0, 0, 0)) leds[x] = CHSV(CUR_PRES.rnd ? random(0, 255) : CUR_PRES.color, 255, 255);
         }

@@ -73,7 +73,9 @@ void parsing() {
           }
           cfg.length = data[17] | (data[16] << 8);  // склеиваем
           cfg.width = data[20] | (data[19] << 8);   // склеиваем
+          if (cfg.length > MAX_LEDS) cfg.length = MAX_LEDS;
           if (cfg.deviceType == GL_TYPE_STRIP) cfg.width = 1;
+          if (cfg.length * cfg.width > MAX_LEDS) cfg.width = MAX_LEDS / cfg.length;
           ntp.setTimeOffset((cfg.GMT - 13) * 3600);
           ntp.setPoolServerName(NTPservers[cfg.NTP - 1]);
           FastLED.setMaxPowerInVoltsAndMilliamps(STRIP_VOLT, cfg.maxCur * 100);
