@@ -15,6 +15,8 @@
 #define STRIP_CHIP WS2812   // чип ленты
 #define STRIP_COLOR GRB     // порядок цветов в ленте
 #define STRIP_VOLT 5        // напряжение ленты, V
+#define CONNECTION_ANGLE 0  // угол подключения: 0 - левый нижний, 1 - левый верхний, 2 - правый верхний, 3 - правый нижний
+#define STRIP_DIRECTION 0   // направление ленты из угла: 0 - вправо, 1 - вверх, 2 - влево, 3 - вниз
 /*
   WS2811, GBR, 12V
   WS2812, GRB, 5V

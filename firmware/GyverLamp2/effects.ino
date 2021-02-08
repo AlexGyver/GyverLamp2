@@ -203,10 +203,61 @@ void fillRow(int row, CRGB color) {
   FOR_i(cfg.width * row, cfg.width * (row + 1)) leds[i] = color;
 }
 
+#if (CONNECTION_ANGLE == 0 && STRIP_DIRECTION == 0)
+#define _WIDTH cfg.width
+#define THIS_X x
+#define THIS_Y y
+
+#elif (CONNECTION_ANGLE == 0 && STRIP_DIRECTION == 1)
+#define _WIDTH cfg.width
+#define THIS_X y
+#define THIS_Y x
+
+#elif (CONNECTION_ANGLE == 1 && STRIP_DIRECTION == 0)
+#define _WIDTH cfg.width
+#define THIS_X x
+#define THIS_Y (cfg.width - y - 1)
+
+#elif (CONNECTION_ANGLE == 1 && STRIP_DIRECTION == 3)
+#define _WIDTH cfg.width
+#define THIS_X (cfg.width - y - 1)
+#define THIS_Y x
+
+#elif (CONNECTION_ANGLE == 2 && STRIP_DIRECTION == 2)
+#define _WIDTH cfg.width
+#define THIS_X (cfg.width - x - 1)
+#define THIS_Y (cfg.width - y - 1)
+
+#elif (CONNECTION_ANGLE == 2 && STRIP_DIRECTION == 3)
+#define _WIDTH cfg.widthIGHT
+#define THIS_X (cfg.width - y - 1)
+#define THIS_Y (cfg.width - x - 1)
+
+#elif (CONNECTION_ANGLE == 3 && STRIP_DIRECTION == 2)
+#define _WIDTH cfg.width
+#define THIS_X (WIDTH - x - 1)
+#define THIS_Y y
+
+#elif (CONNECTION_ANGLE == 3 && STRIP_DIRECTION == 1)
+#define _WIDTH cfg.width
+#define THIS_X y
+#define THIS_Y (cfg.width - x - 1)
+
+#else
+#define _WIDTH cfg.width
+#define THIS_X x
+#define THIS_Y y
+#pragma message "Wrong matrix parameters! Set to default"
+
+#endif
+
+
 // получить номер пикселя в ленте по координатам
 uint16_t getPix(int x, int y) {
-  if ( !(y & 1) || (cfg.deviceType - 2) ) return (y * cfg.width + x);  // если чётная строка
-  else return (y * cfg.width + cfg.width - x - 1);          // если нечётная строка
+  if ( !(THIS_Y & 1) || (cfg.deviceType - 2) )
+    return (THIS_Y * _WIDTH + THIS_X);  // если чётная строка
+  else
+    return (THIS_Y * _WIDTH + _WIDTH - THIS_X - 1);          // если нечётная строка
 }
 /*
    целочисленный мап
