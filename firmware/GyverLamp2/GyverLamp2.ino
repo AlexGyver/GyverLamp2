@@ -1,4 +1,20 @@
-// LOLIN(WEMOS) D1 R2 & mini
+// 0.10
+// исправлена обработка ключа
+// добавлена совместимость с nodemcu
+// поворот матрицы
+// обновление прошивок для разных схем
+// исправлен цвет огня
+// индикация обновления при запуске
+
+// мигает 8:
+// красным - не смог подключиться к АР
+// зелёным - смог подключиться к АР
+// жёлтым - создал свою АП
+// бирюзовым - успешно обновился на новую версию
+// синим - обновился на ту же версию
+// розовым - сброс всех настроек (первый запуск)
+
+// Generic ESP8266, 4MB (FS:2MB OTA)
 // ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
 // FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
 
@@ -6,12 +22,17 @@
 #define GL_KEY "GL"         // ключ сети
 
 // ------------ Кнопка -------------
-#define BTN_PIN 4           // пин кнопки GPIO4 (D2). Или 0 для схемы с ESP-01 !!
+#define BTN_PIN 4           // пин кнопки GPIO4 (D2 на wemos/node), 0 для схемы с ESP-01
 #define USE_BTN 1           // 1 использовать кнопку, 0 нет
 
+// ------------- АЦП --------------
+#define USE_ADC 1           // можно выпилить АЦП
+#define MIC_VCC 12          // питание микрофона GPIO12 (D6 на wemos/node)
+#define PHOT_VCC 14         // питание фоторезистора GPIO14 (D5 на wemos/node)
+
 // ------------ Лента -------------
-#define STRIP_PIN 2         // пин ленты GPIO2 (D4)
-#define MAX_LEDS 512        // макс. светодиодов
+#define STRIP_PIN 2         // пин ленты GPIO2 (D4 на wemos/node)
+#define MAX_LEDS 600        // макс. светодиодов
 #define STRIP_CHIP WS2812   // чип ленты
 #define STRIP_COLOR GRB     // порядок цветов в ленте
 #define STRIP_VOLT 5        // напряжение ленты, V
@@ -28,12 +49,22 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define MIC_VCC D6          // питание микрофона
-#define PHOT_VCC D5         // питание фоторезистора
+#define GL_VERSION 010
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
-//#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 42           // ключ сброса WiFi (измени для сброса всех настроек)
+#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
+#define EE_KEY 44           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
+
+// ------------ БИЛДЕР -------------
+//#define MAX_LEDS 1200
+
+// esp01
+//#define BTN_PIN 0
+//#define STRIP_PIN 2
+//#define USE_ADC 0
+
+// GL2 module
+//#define STRIP_PIN 5     // GPIO5 на gl module (D1 на wemos/node)
 
 // ---------- БИБЛИОТЕКИ -----------
 #include "data.h"         // данные
@@ -71,18 +102,22 @@ FastFilter phot;
 byte btnClicks = 0, brTicks = 0;
 unsigned char matrixValue[11][16];
 bool gotNTP = false;
+void blink8(CRGB color);
 
 // ------------------- SETUP --------------------
 void setup() {
+  delay(800);
   memset(matrixValue, 0, sizeof(matrixValue));
 #ifdef DEBUG_SERIAL
   Serial.begin(115200);
   DEBUGLN();
 #endif
   EEPROM.begin(512);    // старт епром
-  startStrip();         // показываем РГБ
+  startStrip();         // старт ленты  
   btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
   EE_startup();         // читаем епром
+  checkUpdate();        // индикация было ли обновление
+  showRGB();            // показываем ргб  
   checkGroup();         // показываем или меняем адрес
   checkButton();        // проверяем кнопку на удержание
   startWiFi();          // старт вайфай

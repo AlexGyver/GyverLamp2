@@ -203,8 +203,24 @@ void fillRow(int row, CRGB color) {
   FOR_i(cfg.width * row, cfg.width * (row + 1)) leds[i] = color;
 }
 
+void blink8(CRGB color) {
+  FOR_i(0, 3) {
+    fill_solid(leds, 8, color);
+    FastLED.show();
+    delay(300);
+    FastLED.clear();
+    FastLED.show();
+    delay(300);
+  }
+}
+
 // получить номер пикселя в ленте по координатам
 uint16_t getPix(int x, int y) {
+  if (cfg.mTurn) {
+    byte b = x;
+    x = y;
+    y = b;
+  }
   if ( !(y & 1) || (cfg.deviceType - 2) ) return (y * cfg.width + x);  // если чётная строка
   else return (y * cfg.width + cfg.width - x - 1);          // если нечётная строка
 }

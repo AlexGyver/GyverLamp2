@@ -63,7 +63,7 @@ void drawFrame(int pcnt) {
           - pgm_read_byte(&(valueMask[y][newX]));
 
         leds[getPix(x, y)] = CHSV(
-                               CUR_PRES.color * 2.5 + pgm_read_byte(&(hueMask[y][newX])), // H
+                               CUR_PRES.color + pgm_read_byte(&(hueMask[y][newX])), // H
                                255, // S
                                (uint8_t)max(0, nextv) // V
                              );
@@ -75,7 +75,7 @@ void drawFrame(int pcnt) {
     int newX = x;
     if (x > 15) newX = x - 15;
     leds[getPix(newX, 0)] = CHSV(
-                              CUR_PRES.color * 2.5 + pgm_read_byte(&(hueMask[0][newX])), // H
+                              CUR_PRES.color + pgm_read_byte(&(hueMask[0][newX])), // H
                               255,           // S
                               (uint8_t)(((100.0 - pcnt) * matrixValue[0][newX] + pcnt * fireLine[newX]) / 100.0) // V
                             );

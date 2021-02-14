@@ -37,7 +37,16 @@ int mapFF(byte x, byte min, byte max) {
   return (((max - min) * x + (min << 8) + 1) >> 8);
 }
 
-const char OTAhost[] = "http://ota.alexgyver.ru/GL2_latest.bin";
+const char OTAhost[] = "http://ota.alexgyver.ru/";
+const char *OTAfile[] = {
+  "GL2_latest.bin",
+  "com_600.bin",
+  "com_1200.bin",
+  "esp1_600.bin",
+  "esp1_1200.bin",
+  "module_600.bin",
+  "module_1200.bin",
+};
 
 const char *NTPservers[] = {
   "pool.ntp.org",
@@ -62,9 +71,9 @@ struct Config {
   byte maxCur = 5;        // макс ток (мА/100)
   byte workFrom = 0;      // часы работы (0,1.. 23)
   byte workTo = 0;        // часы работы (0,1.. 23)
-
   int16_t length = 100;       // длина ленты
   int16_t width = 1;          // ширина матрицы
+  byte mTurn = 0;
 
   byte state = 1;         // состояние 0 выкл, 1 вкл
   byte group = 1;         // группа девайса (1-10)
@@ -77,6 +86,8 @@ struct Config {
   int16_t maxLight = 1023;    // макс освещённость
   char ssid[32];          // логин wifi
   char pass[32];          // пароль wifi
+  byte version = GL_VERSION;
+  byte update = 0;
 };
 
 #define PRES_SIZE 13

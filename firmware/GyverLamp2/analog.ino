@@ -1,3 +1,4 @@
+#if (USE_ADC == 1)
 void setupADC() {
   low.setDt(0);
   low.setPeriod(0);
@@ -104,3 +105,15 @@ void disableADC() {
   digitalWrite(MIC_VCC, 0);
   pinMode(MIC_VCC, INPUT);
 }
+#else
+void setupADC() {}
+void checkAnalog() {}
+void checkMusic() {}
+void checkPhot() {}
+byte getSoundVol() {
+  return 0;
+}
+void switchToMic() {}
+void switchToPhot() {}
+void disableADC() {}
+#endif

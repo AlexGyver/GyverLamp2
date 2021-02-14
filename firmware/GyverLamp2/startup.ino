@@ -58,7 +58,7 @@ void checkGroup() {
   }
   if (flag) {
     EEPROM.put(0, cfg);
-    EEPROM.commit();    
+    EEPROM.commit();
   }
   DEBUG("group: ");
   DEBUGLN(cfg.group);
@@ -67,10 +67,13 @@ void checkGroup() {
 }
 
 void startStrip() {
-  delay(500);
   FastLED.addLeds<STRIP_CHIP, STRIP_PIN, STRIP_COLOR>(leds, MAX_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setMaxPowerInVoltsAndMilliamps(STRIP_VOLT, 500);
   FastLED.setBrightness(50);
+  FastLED.show();
+}
+
+void showRGB() {
   leds[0] = CRGB::Red;
   leds[1] = CRGB::Green;
   leds[2] = CRGB::Blue;
@@ -91,9 +94,7 @@ void startWiFi() {
 }
 
 void setupAP() {
-  fill_solid(leds, 8, CRGB::Yellow);
-  FastLED.show();
-  delay(500);
+  blink8(CRGB::Yellow);
   WiFi.disconnect();
   WiFi.mode(WIFI_AP);
   delay(100);
@@ -134,8 +135,7 @@ void setupLocal() {
         delay(50);
       }
       if (connect) {
-        fill_solid(leds, 8, CRGB::Green);
-        FastLED.show();
+        blink8(CRGB::Green);
         server.begin();
         DEBUG("Connected! Local IP: ");
         DEBUGLN(WiFi.localIP());
@@ -143,14 +143,7 @@ void setupLocal() {
         return;
       } else {
         DEBUGLN("Failed!");
-        FOR_i(0, 3) {
-          fill_solid(leds, 8, CRGB::Red);
-          FastLED.show();
-          delay(300);
-          FastLED.clear();
-          FastLED.show();
-          delay(300);
-        }
+        blink8(CRGB::Red);
         failCount++;
         tmr = millis();
         if (failCount >= 3) {
@@ -164,5 +157,20 @@ void setupLocal() {
         }
       }
     }
+  }
+}
+
+void checkUpdate() {
+  if (cfg.update) {
+    if (cfg.version != GL_VERSION) {
+      cfg.version = GL_VERSION;
+      blink8(CRGB::Cyan);
+      DEBUG("Update to");
+      DEBUGLN(GL_VERSION);
+    } else {
+      blink8(CRGB::Blue);
+      DEBUG("Update to current");
+    }
+    cfg.update = 0;
   }
 }
