@@ -1,7 +1,10 @@
 /*
+  Версия 0.13b
+  Улучшена стабильность
+
   Версия 0.12b
   Мелкие исправления
-  
+
   Версия 0.11b
   Добавлен редактор палитр
   Исправлены мелкие баги в эффектах
@@ -15,13 +18,12 @@
   Добавлен рассвет
 
   TODO:
-  плавная смена режимов    
-  Аккуратнее со светомузыкой!
-  4 клика вкл выкл смену?  
+  плавная смена режимов
+  4 клика вкл выкл смену?
   Mqtt?
-  Базовый пак  
+  Базовый пак
   Предложения Серёги крутского
-  Убрать аплод?  
+  Убрать аплод?
   Огонь 2018/2020?
   Взять огонь отсюда https://community.alexgyver.ru/threads/wifi-lampa-budilnik-obsuzhdenie-proshivki-ot-gunner47.2418/page-72#post-33652
   Вернуть искры
@@ -68,7 +70,7 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 012      // код версии прошивки
+#define GL_VERSION 013      // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 51           // ключ сброса WiFi (измени для сброса всех настроек)
@@ -97,6 +99,7 @@ const char WiFiPassword[] = "12345678";
 #include "timerMillis.h"  // таймер миллис
 #include "VolAnalyzer.h"  // анализатор громкости
 #include "FFT_C.h"        // фурье
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>      // лента
 #include <ESP8266WiFi.h>  // базовая либа есп
 #include <WiFiUdp.h>      // общение по UDP

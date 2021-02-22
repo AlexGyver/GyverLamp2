@@ -1,7 +1,7 @@
 void effectsRoutine() {
   static timerMillis effTmr(30, true);
   static byte prevEff = 255;
-  
+
   if (dawnTmr.running()) {
     if (effTmr.isReady()) {
       fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, dawnTmr.getLength8(), scaleFF(dawnTmr.getLength8(), dawn.bright), LINEARBLEND));
@@ -9,7 +9,7 @@ void effectsRoutine() {
     }
     if (dawnTmr.isReady()) dawnTmr.stop();
     return;
-  }  
+  }
 
   if (cfg.state && effTmr.isReady()) {
     int thisLength = getLength();
@@ -209,34 +209,37 @@ void effectsRoutine() {
   }
 }
 
+bool musicMode() {
+  return ((cfg.adcMode == GL_ADC_MIC || cfg.adcMode == GL_ADC_BOTH) && (CUR_PRES.advMode > 1 && CUR_PRES.advMode <= 4));
+}
+
 byte getBright() {
-  int maxBr = cfg.bright;
+  int maxBr = cfg.bright;   // макс яркость из конфига
   byte fadeBr = 255;
   if (CUR_PRES.fadeBright) fadeBr = CUR_PRES.bright; // ограничен вручную
 
-  if (cfg.adcMode == GL_ADC_BRI || cfg.adcMode == GL_ADC_BOTH) {    // ----> датчик света
+  if (cfg.adcMode == GL_ADC_BRI || cfg.adcMode == GL_ADC_BOTH) {    // ----> датчик света или оба
     maxBr = constrain(phot.getFil(), cfg.minLight, cfg.maxLight);
-    maxBr = map(maxBr, cfg.minLight, cfg.maxLight, cfg.minBright, cfg.maxBright);
-  } else if (cfg.adcMode > 2 &&                      // ----> ацп мик
-             CUR_PRES.soundMode > 1 &&               // светомузыка вкл
-             CUR_PRES.soundReact == GL_REACT_BRI) {  // режим яркости
-    fadeBr = mapFF(getSoundVol(), CUR_PRES.min, CUR_PRES.max);
+    if (cfg.minLight != cfg.maxLight)
+      maxBr = map(maxBr, cfg.minLight, cfg.maxLight, cfg.minBright, cfg.maxBright);
+  }
+  if (musicMode() &&                          // светомузыка вкл
+      CUR_PRES.soundReact == GL_REACT_BRI) {  // режим яркости
+    fadeBr = mapFF(getSoundVol(), CUR_PRES.min, CUR_PRES.max);  // громкость в 0-255
   }
   return scaleFF(maxBr, fadeBr);
 }
 
 int getLength() {
-  if (cfg.adcMode > 2                           // ацп мик
-      && CUR_PRES.soundMode > 1                 // светомузыка вкл
-      && CUR_PRES.soundReact == GL_REACT_LEN    // режим длины
+  if (musicMode()                             // светомузыка вкл
+      && CUR_PRES.soundReact == GL_REACT_LEN  // режим длины
      ) return mapFF(getSoundVol(), 0, cfg.length);
   else return cfg.length;
 }
 
 byte getScale() {
-  if (cfg.adcMode > 2                           // ацп мик
-      && CUR_PRES.soundMode > 1                 // светомузыка вкл
-      && CUR_PRES.soundReact == GL_REACT_SCL    // режим масштаба
+  if (musicMode()                                                 // светомузыка вкл
+      && CUR_PRES.soundReact == GL_REACT_SCL                      // режим масштаба
      ) return mapFF(getSoundVol(), CUR_PRES.min, CUR_PRES.max);
   else return CUR_PRES.scale;
 }

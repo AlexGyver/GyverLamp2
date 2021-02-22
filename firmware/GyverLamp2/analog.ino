@@ -25,6 +25,9 @@ void setupADC() {
 
   phot.setDt(80);
   phot.setK(31);
+
+  if (cfg.adcMode == GL_ADC_BRI) switchToPhot();
+  else if (cfg.adcMode == GL_ADC_MIC) switchToMic();
 }
 
 
@@ -52,23 +55,21 @@ void checkAnalog() {
 }
 
 void checkMusic() {
-  if (CUR_PRES.soundMode > 1) {
-    if (CUR_PRES.soundMode == GL_MUS_VOL) {   // громкость
-      vol.tick();
-    } else {                                  // частоты
-      int raw[FFT_SIZE], spectr[FFT_SIZE];
-      for (int i = 0; i < FFT_SIZE; i++) raw[i] = analogRead(A0);
-      FFT(raw, spectr);
-      int low_raw = 0;
-      int high_raw = 0;
-      for (int i = 0; i < FFT_SIZE / 2; i++) {
-        spectr[i] = (spectr[i] * (i + 2)) >> 1;
-        if (i < 2) low_raw += spectr[i];
-        else high_raw += spectr[i];
-      }
-      low.tick(low_raw);
-      high.tick(high_raw);
+  if (CUR_PRES.advMode == GL_ADV_VOL) {   // громкость
+    vol.tick();
+  } else if (CUR_PRES.advMode == GL_ADV_LOW || CUR_PRES.advMode == GL_ADV_HIGH) {   // частоты
+    int raw[FFT_SIZE], spectr[FFT_SIZE];
+    for (int i = 0; i < FFT_SIZE; i++) raw[i] = analogRead(A0);
+    FFT(raw, spectr);
+    int low_raw = 0;
+    int high_raw = 0;
+    for (int i = 0; i < FFT_SIZE / 2; i++) {
+      spectr[i] = (spectr[i] * (i + 2)) >> 1;
+      if (i < 2) low_raw += spectr[i];
+      else high_raw += spectr[i];
     }
+    low.tick(low_raw);
+    high.tick(high_raw);
   }
 }
 
@@ -79,10 +80,10 @@ void checkPhot() {
 }
 
 byte getSoundVol() {
-  switch (CUR_PRES.soundMode) {
-    case GL_MUS_VOL: return vol.getVol();
-    case GL_MUS_LOW: return low.getVol();
-    case GL_MUS_HIGH: return high.getVol();
+  switch (CUR_PRES.advMode) {
+    case GL_ADV_VOL: return vol.getVol();
+    case GL_ADV_LOW: return low.getVol();
+    case GL_ADV_HIGH: return high.getVol();
   }
   return 0;
 }

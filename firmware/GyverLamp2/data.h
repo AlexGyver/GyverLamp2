@@ -6,10 +6,11 @@
 #define GL_TYPE_STRIP 1
 #define GL_TYPE_ZIG 2
 #define GL_TYPE_PARAL 3
-#define GL_MUS_NONE 1
-#define GL_MUS_VOL 2
-#define GL_MUS_LOW 3
-#define GL_MUS_HIGH 4
+#define GL_ADV_NONE 1
+#define GL_ADV_VOL 2
+#define GL_ADV_LOW 3
+#define GL_ADV_HIGH 4
+#define GL_ADV_CLOCK 5
 #define GL_REACT_BRI 1
 #define GL_REACT_SCL 2
 #define GL_REACT_LEN 3
@@ -100,7 +101,7 @@ struct Preset {
   byte effect = 1;        // тип эффекта (1,2...) ВЫЧЕСТЬ 1
   byte fadeBright = 0;    // флаг на свою яркость (0/1)
   byte bright = 100;      // своя яркость (0.. 255)
-  byte soundMode = 1;     // тип звука (1,2...) ВЫЧЕСТЬ 1
+  byte advMode = 1;       // дополнительно (1,2...) ВЫЧЕСТЬ 1
   byte soundReact = 1;    // реакция на звук (1,2...) ВЫЧЕСТЬ 1
   byte min = 0;           // мин сигнал светомузыки (0.. 255)
   byte max = 0;           // макс сигнал светомузыки (0.. 255)
