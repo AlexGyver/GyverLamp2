@@ -27,10 +27,15 @@ const unsigned char hueMask[11][16] PROGMEM = {
 
 byte fireLine[100];
 
-void fireRoutine() {
-  shiftUp();
-  FOR_i(0, cfg.width) fireLine[i] = random(64, 255);
-  drawFrame(30);
+void fireRoutine(byte speed) {
+  static byte count = 0;  
+  if (count >= 100) {
+    shiftUp();
+    FOR_i(0, cfg.width) fireLine[i] = random(64, 255);
+    count = 0;
+  }
+  drawFrame(count);
+  count += speed;
 }
 
 void shiftUp() {

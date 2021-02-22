@@ -30,14 +30,29 @@ void setPreset(byte pres) {
   }
 }
 
-void setPower(bool state) {
+void controlHandler(bool state) {
+  if (turnoffTmr.running()) {
+    turnoffTmr.stop();
+    DEBUGLN("stop off timer");
+    return;
+  }
+  if (dawnTmr.running()) {
+    dawnTmr.stop();
+    DEBUGLN("stop dawn timer");
+    return;
+  }  
   if (state) cfg.manualOff = 0;
   if (cfg.state && !state) cfg.manualOff = 1;
+  setPower(state);
+}
+
+void setPower(bool state) {
   cfg.state = state;
   if (!state) {
     delay(100);     // чтобы пролететь мин. частоту обновления
     FastLED.clear();
     FastLED.show();
   }
+  sendToSlaves(0, cfg.state);
   DEBUGLN(state ? "Power on" : "Power off");
 }

@@ -17,8 +17,7 @@ void button() {
     DEBUGLN(btnClicks);
     switch (btnClicks) {
       case 1:
-        setPower(!cfg.state);
-        sendToSlaves(0, cfg.state);
+        controlHandler(!cfg.state);
         break;
       case 2:
         changePreset(1);

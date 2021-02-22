@@ -1,6 +1,8 @@
 #include <FastLED.h>      // лента
 // http://soliton.vm.bytemark.co.uk/pub/cpt-city/
 
+CRGBPalette16 customPal;
+
 DEFINE_GRADIENT_PALETTE( Fire_gp ) {
   0,     0,  0,  0,
   128,   255,  0,  0,
@@ -221,6 +223,7 @@ DEFINE_GRADIENT_PALETTE ( aurora_gp ) {
 };
 
 CRGBPalette16 paletteArr[] = {
+  customPal,
   HeatColors_p,
   Fire_gp,
   LavaColors_p,

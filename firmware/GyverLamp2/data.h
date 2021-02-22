@@ -48,18 +48,21 @@ const char *OTAfile[] = {
   "module_1200.bin",
 };
 
-const char *NTPservers[] = {
-  "pool.ntp.org",
-  "europe.pool.ntp.org",
-  "ntp1.stratum2.ru",
-  "ntp2.stratum2.ru",
-  "ntp.msk-ix.ru",
+const char NTPserver[] = "pool.ntp.org";
+//"pool.ntp.org"
+//"europe.pool.ntp.org"
+//"ntp1.stratum2.ru"
+//"ntp2.stratum2.ru"
+//"ntp.msk-ix.ru"
+
+struct Palette {
+  byte size = 1;
+  byte strip[16 * 3];
 };
 
 #define CFG_SIZE 13
 struct Config {
   byte GMT = 3;           // часовой пояс +13
-  byte NTP = 1;           // 1..5 ВЫЧЕСТЬ 1
   byte bright = 100;      // яркость
   byte adcMode = 1;       // режим ацп (1 выкл, 2 ярк, 3 муз)
   byte minBright = 0;     // мин яркость
@@ -71,9 +74,11 @@ struct Config {
   byte maxCur = 5;        // макс ток (мА/100)
   byte workFrom = 0;      // часы работы (0,1.. 23)
   byte workTo = 0;        // часы работы (0,1.. 23)
-  int16_t length = 100;       // длина ленты
-  int16_t width = 1;          // ширина матрицы
-  byte mTurn = 0;
+  byte matrix = 1;        // тип матрицы 1.. 8
+
+  int16_t length = 100;   // длина ленты
+  int16_t width = 1;      // ширина матрицы
+  uint32_t cityID = 1;    // city ID
 
   byte state = 1;         // состояние 0 выкл, 1 вкл
   byte group = 1;         // группа девайса (1-10)
@@ -82,8 +87,8 @@ struct Config {
   byte presetAmount = 1;  // количество режимов
   byte manualOff = 0;     // выключали вручную?
   int8_t curPreset = 0;   // текущий режим
-  int16_t minLight = 0;       // мин освещённость
-  int16_t maxLight = 1023;    // макс освещённость
+  int16_t minLight = 0;   // мин освещённость
+  int16_t maxLight = 1023;// макс освещённость
   char ssid[32];          // логин wifi
   char pass[32];          // пароль wifi
   byte version = GL_VERSION;

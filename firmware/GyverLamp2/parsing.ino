@@ -9,35 +9,47 @@ void parsing() {
 
     buf[n] = NULL;
     DEBUGLN(buf);   // пакет вида <ключ>,<канал>,<тип>,<дата1>,<дата2>...
+    mString pars(buf, sizeof(buf));
+    if (!pars.startsWith(GL_KEY)) return;   // не наш ключ
+    byte keyLen = strlen(GL_KEY);
 
-    byte keyLen = strchr(buf, ',') - buf;     // indexof
-    if (strncmp(buf, GL_KEY, keyLen)) return; // не наш ключ
-
-    byte data[MAX_PRESETS * PRES_SIZE + keyLen];
+    byte data[MAX_PRESETS * PRES_SIZE + 5];
     memset(data, 0, MAX_PRESETS * PRES_SIZE + keyLen);
     int count = 0;
     char *str, *p = buf + keyLen;  // сдвиг до даты
     char *ssid, *pass;
+    uint32_t city = 0;
+    uint16_t stripL, stripW;
     while ((str = strtok_r(p, ",", &p)) != NULL) {
-      data[count++] = atoi(str);
-      if (count == 4) ssid = str;
-      if (count == 5) pass = str;
+      uint32_t thisInt = atoi(str);
+      data[count++] = (byte)thisInt;
+      if (data[1] == 0) {
+        if (count == 4) ssid = str;
+        if (count == 5) pass = str;
+      }
+      if (data[1] == 1) {
+        if (count == 16) stripL = thisInt;
+        if (count == 17) stripW = thisInt;
+        if (count == 18) city = thisInt;
+      }
     }
 
     // широковещательный запрос времени для local устройств в сети AP лампы
     if (data[0] == 0 && cfg.WiFimode && !gotNTP) {
-      now.hour = data[1];
-      now.min = data[2];
+      now.day = data[1];
+      now.hour = data[2];
+      now.min = data[3];
+      now.sec = data[4];
       now.setMs(0);
     }
 
     if (data[0] != cfg.group) return;     // не наш адрес, выходим
 
-    switch (data[1]) {  // тип 0 - control, 1 - config, 2 - effects, 3 - dawn
+    switch (data[1]) {  // тип 0 - control, 1 - config, 2 - effects, 3 - dawn, 4 - from master, 5 - palette
       case 0: DEBUGLN("Control");
         switch (data[2]) {
-          case 0: setPower(0); break;                     // выкл
-          case 1: setPower(1); break;                     // вкл
+          case 0: controlHandler(0); break;               // выкл
+          case 1: controlHandler(1); break;               // вкл
           case 2: cfg.minLight = phot.getRaw(); break;    // мин яркость
           case 3: cfg.maxLight = phot.getRaw(); break;    // макс яркость
           case 4: changePreset(-1); break;                // пред пресет
@@ -54,12 +66,16 @@ void parsing() {
           case 12: if (gotNTP) {                          // OTA обновление, если есть интернет
               cfg.update = 1;
               EE_updCfg();
-              delay(100);
               FastLED.clear();
               FastLED.show();
               char OTA[60];
-              strcpy(OTA, OTAhost);
-              strcpy(OTA + strlen(OTAhost), OTAfile[data[3]]);
+              mString ota(OTA, 60);
+              ota.clear();
+              ota += OTAhost;
+              ota += OTAfile[data[3]];
+              DEBUG("Update to ");
+              DEBUGLN(OTA);
+              delay(100);
               ESPhttpUpdate.update(OTA);
             } break;
           case 13:                                        // выключить через
@@ -77,15 +93,14 @@ void parsing() {
         FOR_i(0, CFG_SIZE) {
           *((byte*)&cfg + i) = data[i + 2];   // загоняем в структуру
         }
-        cfg.mTurn = data[21];
-        cfg.length = data[17] | (data[16] << 8);  // склеиваем
-        cfg.width = data[20] | (data[19] << 8);   // склеиваем
+        cfg.length = stripL;
+        cfg.width = stripW;
+        cfg.cityID = city;
 
         if (cfg.length > MAX_LEDS) cfg.length = MAX_LEDS;
         if (cfg.deviceType == GL_TYPE_STRIP) cfg.width = 1;
         if (cfg.length * cfg.width > MAX_LEDS) cfg.width = MAX_LEDS / cfg.length;
         ntp.setTimeOffset((cfg.GMT - 13) * 3600);
-        ntp.setPoolServerName(NTPservers[cfg.NTP - 1]);
         FastLED.setMaxPowerInVoltsAndMilliamps(STRIP_VOLT, cfg.maxCur * 100);
         if (cfg.adcMode == GL_ADC_BRI) switchToPhot();
         else if (cfg.adcMode == GL_ADC_MIC) switchToMic();
@@ -100,6 +115,7 @@ void parsing() {
             *((byte*)&preset + j * PRES_SIZE + i) = data[j * PRES_SIZE + i + 3]; // загоняем в структуру
           }
         }
+        if (!cfg.rotation) setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
         EE_updatePreset();
         presetRotation(true); // форсировать смену режима
         break;
@@ -121,9 +137,25 @@ void parsing() {
           EE_updateCfg();
         }
         break;
+
+      case 5: DEBUGLN("Palette");
+        FOR_i(0, 1 + 16 * 3) {
+          *((byte*)&pal + i) = data[i + 2]; // загоняем в структуру
+        }
+        updPal();
+        EE_updatePal();
+        break;
+
+      case 6: DEBUGLN("Time");
+        if (!cfg.WiFimode) {  // если мы AP
+          now.day = data[2];
+          now.hour = data[3];
+          now.min = data[4];
+        }
+        gotTime = true;
+        break;
     }
     FastLED.clear();    // на всякий случай
-
   }
 }
 
@@ -131,18 +163,19 @@ void sendToSlaves(byte data1, byte data2) {
   if (cfg.role == GL_MASTER) {
     IPAddress ip = WiFi.localIP();
     ip[3] = 255;
-    char reply[20] = GL_KEY;
-    byte keylen = strlen(GL_KEY);
-    reply[keylen++] = ',';
-    reply[keylen++] = cfg.group + '0';
-    reply[keylen++] = ',';
-    reply[keylen++] = '4';
-    reply[keylen++] = ',';
-    reply[keylen++] = data1 + '0';
-    reply[keylen++] = ',';
-    itoa(data2, reply + (keylen++), DEC);
 
-    DEBUG("Sending: ");
+    char reply[20];
+    mString packet(reply, sizeof(reply));
+    packet.clear();
+    packet += GL_KEY;
+    packet += ',';
+    packet += cfg.group;
+    packet += ",4,";
+    packet += data1;
+    packet += ',';
+    packet += data2;
+
+    DEBUG("Sending to Slaves: ");
     DEBUGLN(reply);
 
     FOR_i(0, 3) {

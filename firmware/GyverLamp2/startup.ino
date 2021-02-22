@@ -135,6 +135,7 @@ void setupLocal() {
         delay(50);
       }
       if (connect) {
+        connTmr.stop();
         blink8(CRGB::Green);
         server.begin();
         DEBUG("Connected! Local IP: ");
@@ -147,6 +148,7 @@ void setupLocal() {
         failCount++;
         tmr = millis();
         if (failCount >= 3) {
+          connTmr.restart();    // попробуем позже
           setupAP();
           return;
           /*DEBUGLN("Reboot to AP!");
@@ -172,5 +174,13 @@ void checkUpdate() {
       DEBUG("Update to current");
     }
     cfg.update = 0;
+    EE_updCfg();
+  }
+}
+
+void tryReconnect() {
+  if (connTmr.isReady()) {
+    DEBUGLN("Reconnect");
+    setupLocal();
   }
 }

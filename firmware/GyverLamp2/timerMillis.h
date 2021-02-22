@@ -12,7 +12,6 @@ class timerMillis {
     }
     boolean isReady() {
       if (_active && millis() - _tmr >= _interval) {
-        //_tmr += _interval;
         reset();
         return true;
       }
@@ -27,6 +26,12 @@ class timerMillis {
     }
     void stop() {
       _active = false;
+    }
+    bool running() {
+      return _active;
+    }
+    byte getLength8() {
+      return (millis() - _tmr) * 255ul / _interval;
     }
 
   private:

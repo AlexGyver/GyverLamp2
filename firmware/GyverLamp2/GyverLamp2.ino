@@ -1,20 +1,36 @@
-// 0.10
-// исправлена обработка ключа
-// добавлена совместимость с nodemcu
-// поворот матрицы
-// обновление прошивок для разных схем
-// исправлен цвет огня
-// индикация обновления при запуске
+/*
+  Версия 0.11b
+  Добавлен редактор палитр
+  Исправлены мелкие баги в эффектах
+  Переподключение к роутеру после сброса сети
+  Настройка ориентации матрицы из приложения
+  Переработан эффект "Частицы"
+  Добавлена скорость огня
+  Переключение на новый/выбранный режим при редактировании
+  Отправка времени из сервиса (для АР)
+  Выключение по таймеру теперь плавное
+  Добавлен рассвет
 
-// мигает 8:
-// красным - не смог подключиться к АР
-// зелёным - смог подключиться к АР
-// жёлтым - создал свою АП
-// бирюзовым - успешно обновился на новую версию
-// синим - обновился на ту же версию
-// розовым - сброс всех настроек (первый запуск)
+  TODO:
+  плавная смена режимов    
+  Аккуратнее со светомузыкой!
+  4 клика вкл выкл смену?  
+  Mqtt?
+  Базовый пак  
+  Предложения Серёги крутского
+  Убрать аплод?  
+  Огонь 2018/2020?
+  Взять огонь отсюда https://community.alexgyver.ru/threads/wifi-lampa-budilnik-obsuzhdenie-proshivki-ot-gunner47.2418/page-72#post-33652
+  Вернуть искры
+  Эффект погода https://it4it.club/topic/40-esp8266-i-parsing-pogodyi-s-openweathermap/
+  Эффект часы
+*/
 
-// Generic ESP8266, 4MB (FS:2MB OTA)
+// ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
+// ДЛЯ КОМПИЛЯЦИИ ПРОШИВКИ ПОД NODEMCU/WEMOS/ESP01/ESP12 ВЫБИРАТЬ
+// Инструменты/Плата Generic ESP8266
+// Инструменты/Flash Size 4MB (FS:2MB OTA)
+// При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
 // ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
 // FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
 
@@ -49,11 +65,12 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 010
+#define GL_VERSION 011      // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
-#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 44           // ключ сброса WiFi (измени для сброса всех настроек)
+//#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
+#define EE_KEY 50           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
+//#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
 //#define MAX_LEDS 1200
@@ -82,11 +99,13 @@ const char WiFiPassword[] = "12345678";
 #include <WiFiUdp.h>      // общение по UDP
 #include <EEPROM.h>       // епром
 #include "ESP8266httpUpdate.h"  // OTA
+#include "mString.h"      // стринг билдер
 
 // ------------------- ДАТА --------------------
 Config cfg;
 Preset preset[MAX_PRESETS];
 Dawn dawn;
+Palette pal;
 WiFiServer server(80);
 WiFiUDP Udp;
 WiFiUDP ntpUDP;
@@ -94,43 +113,48 @@ NTPClient ntp(ntpUDP);
 CRGB leds[MAX_LEDS];
 Time now;
 Button btn(BTN_PIN);
-timerMillis EEtmr(EE_TOUT), turnoffTmr;
+timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000), dawnTmr;
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;
 
 byte btnClicks = 0, brTicks = 0;
 unsigned char matrixValue[11][16];
-bool gotNTP = false;
+bool gotNTP = false, gotTime = false;
 void blink8(CRGB color);
 
 // ------------------- SETUP --------------------
 void setup() {
-  delay(800);
+  delay(2000);          // ждём старта есп
   memset(matrixValue, 0, sizeof(matrixValue));
 #ifdef DEBUG_SERIAL
   Serial.begin(115200);
   DEBUGLN();
 #endif
   EEPROM.begin(512);    // старт епром
-  startStrip();         // старт ленты  
+  startStrip();         // старт ленты
   btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
   EE_startup();         // читаем епром
+#ifndef SKIP_WIFI
   checkUpdate();        // индикация было ли обновление
-  showRGB();            // показываем ргб  
+  showRGB();            // показываем ргб
   checkGroup();         // показываем или меняем адрес
   checkButton();        // проверяем кнопку на удержание
   startWiFi();          // старт вайфай
   setupTime();          // выставляем время
+#endif
   setupADC();           // настраиваем анализ
   presetRotation(true); // форсировать смену режима
 }
 
 void loop() {
   timeTicker();       // обновляем время
+#ifndef SKIP_WIFI
+  tryReconnect();     // пробуем переподключиться если WiFi упал
   yield();
   parsing();          // ловим данные
   yield();
+#endif
   checkEEupdate();    // сохраняем епром
   presetRotation(0);  // смена режимов по расписанию
   effectsRoutine();   // мигаем
