@@ -70,14 +70,14 @@ struct Config {
   byte rotation = 0;      // смена режимов: 0 ручная, 1 авто
   byte rotRnd = 0;        // тип автосмены: 0 в порядке, 1 рандом
   byte rotPeriod = 1;     // период смены (1,5..)
-  byte deviceType = 1;    // 1 лента, 2 зигзаг, 3 параллел
+  byte deviceType = 2;    // 1 лента, 2 зигзаг, 3 параллел
   byte maxCur = 5;        // макс ток (мА/100)
   byte workFrom = 0;      // часы работы (0,1.. 23)
   byte workTo = 0;        // часы работы (0,1.. 23)
   byte matrix = 1;        // тип матрицы 1.. 8
 
-  int16_t length = 100;   // длина ленты
-  int16_t width = 1;      // ширина матрицы
+  int16_t length = 16;    // длина ленты
+  int16_t width = 16;     // ширина матрицы
   uint32_t cityID = 1;    // city ID
 
   byte state = 1;         // состояние 0 выкл, 1 вкл
@@ -104,9 +104,9 @@ struct Preset {
   byte soundReact = 1;    // реакция на звук (1,2...) ВЫЧЕСТЬ 1
   byte min = 0;           // мин сигнал светомузыки (0.. 255)
   byte max = 0;           // макс сигнал светомузыки (0.. 255)
-  byte speed = 10;        // скорость (0.. 255)
-  byte palette = 1;       // палитра (1,2...) ВЫЧЕСТЬ 1
-  byte scale = 1;         // масштаб (0.. 255)
+  byte speed = 200;       // скорость (0.. 255)
+  byte palette = 2;       // палитра (1,2...) ВЫЧЕСТЬ 1
+  byte scale = 100;       // масштаб (0.. 255)
   byte fromCenter = 0;    // эффект из центра (0/1)
   byte color = 0;         // цвет (0.. 255)
   byte rnd = 0;           // случайный (0/1)

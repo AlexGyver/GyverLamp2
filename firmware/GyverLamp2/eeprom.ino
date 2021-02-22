@@ -12,7 +12,7 @@ void EE_startup() {
     EEPROM.put(sizeof(cfg) + sizeof(dawn), pal);
     EEPROM.put(sizeof(cfg) + sizeof(dawn) + sizeof(pal), preset);
     EEPROM.commit();
-    blink8(CRGB::Pink);
+    blink8(CRGB::Magenta);
     DEBUGLN("First start");
   }
   EEPROM.get(0, cfg);
