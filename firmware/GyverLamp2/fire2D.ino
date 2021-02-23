@@ -72,6 +72,14 @@ void drawFrame(int pcnt) {
                                255, // S
                                (uint8_t)max(0, nextv) // V
                              );
+      } else if (y == 11) {
+        if (random8(0, 20) == 0 && getPixColor(x, y - 1) != 0) setPix(x, y, getPixColor(x, y - 1));
+        else setPix(x, y, 0);
+      } else {
+        // старая версия для яркости
+        if (getPixColor(x, y - 1) > 0)
+          setPix(x, y, getPixColor(x, y - 1));
+        else setPix(x, y, 0);
       }
     }
   }

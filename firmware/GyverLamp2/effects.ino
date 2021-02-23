@@ -7,7 +7,10 @@ void effectsRoutine() {
       fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, dawnTmr.getLength8(), scaleFF(dawnTmr.getLength8(), dawn.bright), LINEARBLEND));
       FastLED.show();
     }
-    if (dawnTmr.isReady()) dawnTmr.stop();
+    if (dawnTmr.isReady()) {
+      dawnTmr.stop();
+      FastLED.clear();
+    }
     return;
   }
 
@@ -28,8 +31,9 @@ void effectsRoutine() {
     if (prevEff != CUR_PRES.effect) {
       FastLED.clear();
       prevEff = CUR_PRES.effect;
+      loading = true;
     }
-
+    // =================================================== ЭФФЕКТЫ ===================================================
     switch (CUR_PRES.effect) {
       case 1: // =================================== ПЕРЛИН ===================================
         if (cfg.deviceType > 1) {
@@ -56,8 +60,8 @@ void effectsRoutine() {
 
       case 2: // ==================================== ЦВЕТ ====================================
         {
-          fill_solid(leds, cfg.length * thisWidth, CHSV(CUR_PRES.color, thisScale, CUR_PRES.min));
-          CRGB thisColor = CHSV(CUR_PRES.color, thisScale, CUR_PRES.max);
+          fill_solid(leds, cfg.length * thisWidth, CHSV(CUR_PRES.color, thisScale, 30));
+          CRGB thisColor = CHSV(CUR_PRES.color, thisScale, thisBright);
           if (CUR_PRES.fromCenter) {
             fillStrip(cfg.length / 2, cfg.length / 2 + thisLength / 2, thisColor);
             fillStrip(cfg.length / 2 - thisLength / 2, cfg.length / 2, thisColor);
@@ -69,9 +73,9 @@ void effectsRoutine() {
 
       case 3: // ================================= СМЕНА ЦВЕТА =================================
         {
-          CRGB thisColor = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal((now.weekMs >> 5) * CUR_PRES.speed / 255), CUR_PRES.min, LINEARBLEND);
+          CRGB thisColor = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal((now.weekMs >> 5) * CUR_PRES.speed / 255), 10, LINEARBLEND);
           fill_solid(leds, cfg.length * thisWidth, thisColor);
-          thisColor = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal((now.weekMs >> 5) * CUR_PRES.speed / 255), CUR_PRES.max, LINEARBLEND);
+          thisColor = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal((now.weekMs >> 5) * CUR_PRES.speed / 255), thisBright, LINEARBLEND);
           if (CUR_PRES.fromCenter) {
             fillStrip(cfg.length / 2, cfg.length / 2 + thisLength / 2, thisColor);
             fillStrip(cfg.length / 2 - thisLength / 2, cfg.length / 2, thisColor);
@@ -85,7 +89,7 @@ void effectsRoutine() {
         if (CUR_PRES.fromCenter) {
           FOR_i(cfg.length / 2, cfg.length) {
             byte bright = 255;
-            if (CUR_PRES.soundReact == GL_REACT_LEN) bright = (i < cfg.length / 2 + thisLength / 2) ? (CUR_PRES.max) : (CUR_PRES.min);
+            if (CUR_PRES.soundReact == GL_REACT_LEN) bright = (i < cfg.length / 2 + thisLength / 2) ? (thisBright) : (10);
             CRGB thisColor = ColorFromPalette(
                                paletteArr[CUR_PRES.palette - 1],   // (x*1.9 + 25) / 255 - быстрый мап 0..255 в 0.1..2
                                scalePal((i * (thisScale * 1.9 + 25) / cfg.length) + ((now.weekMs >> 3) * (CUR_PRES.speed - 128) / 128)),
@@ -99,7 +103,7 @@ void effectsRoutine() {
         } else {
           FOR_i(0, cfg.length) {
             byte bright = 255;
-            if (CUR_PRES.soundReact == GL_REACT_LEN) bright = (i < thisLength) ? (CUR_PRES.max) : (CUR_PRES.min);
+            if (CUR_PRES.soundReact == GL_REACT_LEN) bright = (i < thisLength) ? (thisBright) : (10);
             CRGB thisColor = ColorFromPalette(
                                paletteArr[CUR_PRES.palette - 1],   // (x*1.9 + 25) / 255 - быстрый мап 0..255 в 0.1..2
                                scalePal((i * (thisScale * 1.9 + 25) / cfg.length) + ((now.weekMs >> 3) * (CUR_PRES.speed - 128) / 128)),
@@ -117,14 +121,14 @@ void effectsRoutine() {
           FOR_i(0, thisScale / 8 + 1) {
             rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
             int homeX = inoise16(i * 100000000ul + (now.weekMs << 3) * CUR_PRES.speed / 255);
-            homeX = map(homeX, 10000, 55000, 0, cfg.length);
+            homeX = map(homeX, 15000, 50000, 0, cfg.length);
             int offsX = inoise8(i * 2500 + (now.weekMs >> 1) * CUR_PRES.speed / 255) - 128;
             offsX = cfg.length / 2 * offsX / 128;
             int thisX = homeX + offsX;
 
             if (cfg.deviceType > 1) {
               int homeY = inoise16(i * 100000000ul + 2000000000ul + (now.weekMs << 3) * CUR_PRES.speed / 255);
-              homeY = map(homeY, 10000, 55000, 0, cfg.width);
+              homeY = map(homeY, 15000, 50000, 0, cfg.width);
               int offsY = inoise8(i * 2500 + 30000 + (now.weekMs >> 1) * CUR_PRES.speed / 255) - 128;
               offsY = cfg.length / 2 * offsY / 128;
               int thisY = homeY + offsY;
@@ -134,59 +138,58 @@ void effectsRoutine() {
             }
           }
         }
-        /*
-          FOR_i(0, cfg.length * cfg.width) leds[i].fadeToBlackBy(70);
-          if (cfg.deviceType > 1) {
-          uint16_t rndVal = 0;
-          FOR_i(0, thisScale / 8) {
-            int thisY = inoise16(i * 100000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
-            thisY = map(thisY, 10000, 55000, 0, cfg.length);
-            int thisX = inoise16(i * 100000000ul + 2000000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
-            thisX = map(thisX, 10000, 55000, 0, cfg.width);
-            rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
-
-            if (thisY >= 0 && thisY < cfg.length && thisX >= 0 && thisX < cfg.width)
-              leds[getPix(thisX, thisY)] = CHSV(CUR_PRES.rnd ? rndVal : CUR_PRES.color, 255, 255);
-          }
-          } else {
-          uint16_t rndVal = 0;
-          FOR_i(0, thisScale / 8) {
-            int thisPos = inoise16(i * 100000000ul + (now.weekMs << 6) * CUR_PRES.speed / 255);
-            thisPos = map(thisPos, 10000, 55000, 0, cfg.length);
-            rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
-            if (thisPos >= 0 && thisPos < cfg.length) leds[thisPos] = CHSV(CUR_PRES.rnd ? rndVal : CUR_PRES.color, 255, 255);
-          }
-          }*/
         break;
 
       case 6: // ==================================== ОГОНЬ ====================================
-        {
-          if (cfg.deviceType > 1) {         // 2D огонь
-            fireRoutine(CUR_PRES.speed / 2);
-          } else {                          // 1D огонь
-            static byte heat[MAX_LEDS];
-            CRGBPalette16 gPal;
-            if (CUR_PRES.color < 5) gPal = HeatColors_p;
-            else gPal = CRGBPalette16(CRGB::Black, CHSV(CUR_PRES.color, 255, 255), CRGB::White);
-            if (CUR_PRES.fromCenter) thisLength /= 2;
+        if (cfg.deviceType > 1) {         // 2D огонь
+          fireRoutine(CUR_PRES.speed / 2);
+        } else {                          // 1D огонь
+          FastLED.clear();
+          static byte heat[MAX_LEDS];
+          CRGBPalette16 gPal;
+          if (CUR_PRES.color < 5) gPal = HeatColors_p;
+          else gPal = CRGBPalette16(CRGB::Black, CHSV(CUR_PRES.color, 255, 255), CRGB::White);
+          if (CUR_PRES.fromCenter) thisLength /= 2;
 
-            for (int i = 0; i < thisLength; i++) heat[i] = qsub8(heat[i], random8(0, ((((255 - thisScale) / 2 + 20) * 10) / thisLength) + 2));
-            for (int k = thisLength - 1; k >= 2; k--) heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
-            if (random8() < 120 ) {
-              int y = random8(7);
-              heat[y] = qadd8(heat[y], random8(160, 255));
-            }
-            if (CUR_PRES.fromCenter) {
-              for (int j = 0; j < thisLength; j++) leds[cfg.length / 2 + j] = ColorFromPalette(gPal, scale8(heat[j], 240));
-              FOR_i(0, cfg.length / 2) leds[i] = leds[cfg.length - i - 1];
-            } else {
-              for (int j = 0; j < thisLength; j++) leds[j] = ColorFromPalette(gPal, scale8(heat[j], 240));
-            }
+          for (int i = 0; i < thisLength; i++) heat[i] = qsub8(heat[i], random8(0, ((((255 - thisScale) / 2 + 20) * 10) / thisLength) + 2));
+          for (int k = thisLength - 1; k >= 2; k--) heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+          if (random8() < 120 ) {
+            int y = random8(7);
+            heat[y] = qadd8(heat[y], random8(160, 255));
+          }
+          if (CUR_PRES.fromCenter) {
+            for (int j = 0; j < thisLength; j++) leds[cfg.length / 2 + j] = ColorFromPalette(gPal, scale8(heat[j], 240));
+            FOR_i(0, cfg.length / 2) leds[i] = leds[cfg.length - i - 1];
+          } else {
+            for (int j = 0; j < thisLength; j++) leds[j] = ColorFromPalette(gPal, scale8(heat[j], 240));
           }
         }
         break;
 
-      case 7: // ================================== КОНФЕТТИ ==================================
+      case 7: // ==================================== ОГОНЬ 2020 ====================================
+        FastLED.clear();
+        if (cfg.deviceType > 1) {         // 2D огонь          
+          fire2020(CUR_PRES.scale, thisLength);
+        } else {                          // 1D огонь
+          static byte heat[MAX_LEDS];
+          if (CUR_PRES.fromCenter) thisLength /= 2;
+
+          for (int i = 0; i < thisLength; i++) heat[i] = qsub8(heat[i], random8(0, ((((255 - thisScale) / 2 + 20) * 10) / thisLength) + 2));
+          for (int k = thisLength - 1; k >= 2; k--) heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+          if (random8() < 120 ) {
+            int y = random8(7);
+            heat[y] = qadd8(heat[y], random8(160, 255));
+          }
+          if (CUR_PRES.fromCenter) {
+            for (int j = 0; j < thisLength; j++) leds[cfg.length / 2 + j] = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scale8(heat[j], 240));
+            FOR_i(0, cfg.length / 2) leds[i] = leds[cfg.length - i - 1];
+          } else {
+            for (int j = 0; j < thisLength; j++) leds[j] = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scale8(heat[j], 240));
+          }
+        }
+        break;
+
+      case 8: // ================================== КОНФЕТТИ ==================================
         FOR_i(0, (thisScale >> 3) + 1) {
           int x = random(0, cfg.length * cfg.width);
           if (leds[x] == CRGB(0, 0, 0)) leds[x] = CHSV(CUR_PRES.rnd ? random(0, 255) : CUR_PRES.color, 255, 255);
@@ -197,7 +200,7 @@ void effectsRoutine() {
         }
         break;
 
-      case 8: // ================================== ПОГОДА ==================================
+      case 9: // ================================== ПОГОДА ==================================
 
         break;
     }
@@ -208,6 +211,8 @@ void effectsRoutine() {
     FastLED.show();
   }
 }
+
+// ====================================================================================================================
 
 bool musicMode() {
   return ((cfg.adcMode == GL_ADC_MIC || cfg.adcMode == GL_ADC_BOTH) && (CUR_PRES.advMode > 1 && CUR_PRES.advMode <= 4));
@@ -233,7 +238,8 @@ byte getBright() {
 int getLength() {
   if (musicMode()                             // светомузыка вкл
       && CUR_PRES.soundReact == GL_REACT_LEN  // режим длины
-     ) return mapFF(getSoundVol(), 0, cfg.length);
+     ) //return mapFF(getSoundVol(), 0, cfg.length);
+    return mapFF(getSoundVol(), scaleFF(cfg.length, CUR_PRES.min), scaleFF(cfg.length, CUR_PRES.max));
   else return cfg.length;
 }
 
@@ -286,6 +292,11 @@ void setPix(int x, int y, CRGB color) {
 }
 void setLED(int x, CRGB color) {
   if (x >= 0 && x < cfg.length) leds[x] = color;
+}
+uint32_t getPixColor(int x, int y) {
+  int thisPix = getPix(x, y);
+  if (thisPix < 0 || thisPix >= MAX_LEDS) return 0;
+  return (((uint32_t)leds[thisPix].r << 16) | ((long)leds[thisPix].g << 8 ) | (long)leds[thisPix].b);
 }
 
 // получить номер пикселя в ленте по координатам

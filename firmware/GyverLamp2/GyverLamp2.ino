@@ -1,4 +1,10 @@
 /*
+  Версия 0.14b
+  Мелкие баги
+  Вернул искры огню
+  Добавлены палитры
+  Добавлен огонь 2020
+  
   Версия 0.13b
   Улучшена стабильность
 
@@ -24,9 +30,6 @@
   Базовый пак
   Предложения Серёги крутского
   Убрать аплод?
-  Огонь 2018/2020?
-  Взять огонь отсюда https://community.alexgyver.ru/threads/wifi-lampa-budilnik-obsuzhdenie-proshivki-ot-gunner47.2418/page-72#post-33652
-  Вернуть искры
   Эффект погода https://it4it.club/topic/40-esp8266-i-parsing-pogodyi-s-openweathermap/
   Эффект часы
 */
@@ -70,10 +73,10 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 013      // код версии прошивки
+#define GL_VERSION 014      // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 51           // ключ сброса WiFi (измени для сброса всех настроек)
+#define EE_KEY 52           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
@@ -127,6 +130,7 @@ FastFilter phot;
 byte btnClicks = 0, brTicks = 0;
 unsigned char matrixValue[11][16];
 bool gotNTP = false, gotTime = false;
+bool loading = true;
 void blink8(CRGB color);
 
 // ------------------- SETUP --------------------

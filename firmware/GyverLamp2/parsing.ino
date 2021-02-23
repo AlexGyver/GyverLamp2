@@ -118,6 +118,7 @@ void parsing() {
         if (!cfg.rotation) setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
         EE_updatePreset();
         presetRotation(true); // форсировать смену режима
+        loading = true;
         break;
 
       case 3: DEBUGLN("Dawn");
