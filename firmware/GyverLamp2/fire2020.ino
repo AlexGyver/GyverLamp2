@@ -12,10 +12,12 @@ void fire2020(byte scale, int len) {
   static float trackingObjectPosX[100];
   static float trackingObjectPosY[100];
   static uint16_t ff_x, ff_y, ff_z;
+  
 
   if (loading) {
     loading = false;
-    deltaValue = (((scale - 1U) % 11U + 1U) << 4U) - 8U; // ширина языков пламени (масштаб шума Перлина)
+    //deltaValue = (((scale - 1U) % 11U + 1U) << 4U) - 8U; // ширина языков пламени (масштаб шума Перлина)
+    deltaValue = map(scale, 0, 255, 8, 168);
     deltaHue = map(deltaValue, 8U, 168U, 8U, 84U); // высота языков пламени должна уменьшаться не так быстро, как ширина
     step = map(255U - deltaValue, 87U, 247U, 4U, 32U); // вероятность смещения искорки по оси ИКС
     for (uint8_t j = 0; j < cfg.length; j++) {

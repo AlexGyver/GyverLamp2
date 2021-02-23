@@ -1,4 +1,7 @@
 /*
+  Версия 0.15b
+  Исправлен масштаб огня 2020
+  
   Версия 0.14b
   Мелкие баги
   Вернул искры огню
@@ -73,7 +76,7 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 014      // код версии прошивки
+#define GL_VERSION 015      // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 52           // ключ сброса WiFi (измени для сброса всех настроек)
@@ -81,12 +84,12 @@ const char WiFiPassword[] = "12345678";
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
-//#define MAX_LEDS 1200
+#define MAX_LEDS 1200
 
 // esp01
-//#define BTN_PIN 0
-//#define STRIP_PIN 2
-//#define USE_ADC 0
+#define BTN_PIN 0
+#define STRIP_PIN 2
+#define USE_ADC 0
 
 // GL2 module
 //#define STRIP_PIN 5     // GPIO5 на gl module (D1 на wemos/node)
