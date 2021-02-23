@@ -33,11 +33,13 @@ void setPreset(byte pres) {
 void controlHandler(bool state) {
   if (turnoffTmr.running()) {
     turnoffTmr.stop();
+    FastLED.clear();
     DEBUGLN("stop off timer");
     return;
   }
   if (dawnTmr.running()) {
     dawnTmr.stop();
+    FastLED.clear();
     DEBUGLN("stop dawn timer");
     return;
   }  

@@ -10,6 +10,7 @@ void effectsRoutine() {
     if (dawnTmr.isReady()) {
       dawnTmr.stop();
       FastLED.clear();
+      FastLED.show();
     }
     return;
   }
