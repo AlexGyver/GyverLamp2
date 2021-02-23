@@ -17,7 +17,7 @@ void fire2020(byte scale, int len) {
   if (loading) {
     loading = false;
     //deltaValue = (((scale - 1U) % 11U + 1U) << 4U) - 8U; // ширина языков пламени (масштаб шума Перлина)
-    deltaValue = map(255-scale, 0, 255, 8, 168);
+    deltaValue = map(scale, 0, 255, 8, 168);
     deltaHue = map(deltaValue, 8U, 168U, 8U, 84U); // высота языков пламени должна уменьшаться не так быстро, как ширина
     step = map(255U - deltaValue, 87U, 247U, 4U, 32U); // вероятность смещения искорки по оси ИКС
     for (uint8_t j = 0; j < cfg.length; j++) {
