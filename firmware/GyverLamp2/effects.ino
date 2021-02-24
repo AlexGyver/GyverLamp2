@@ -22,6 +22,7 @@ void effectsRoutine() {
     byte thisBright = getBright();
 
     if (turnoffTmr.running()) thisBright = scaleFF(thisBright, 255 - turnoffTmr.getLength8());
+    else if (blinkTmr.runningStop()) thisBright = scaleFF(thisBright, blinkTmr.getLength8());
     if (turnoffTmr.isReady()) {
       turnoffTmr.stop();
       setPower(0);
@@ -40,12 +41,12 @@ void effectsRoutine() {
         if (cfg.deviceType > 1) {
           FOR_j(0, cfg.length) {
             FOR_i(0, cfg.width) {
-              leds[getPix(i, j)] = ColorFromPalette(paletteArr[CUR_PRES.palette - 1],
-                                                    scalePal(inoise8(
-                                                        i * (thisScale / 5) - cfg.width * (thisScale / 5) / 2,
-                                                        j * (thisScale / 5) - cfg.length * (thisScale / 5) / 2,
-                                                        (now.weekMs >> 1) * CUR_PRES.speed / 255)),
-                                                    255, LINEARBLEND);
+              setPix(i, j, ColorFromPalette(paletteArr[CUR_PRES.palette - 1],
+                                            scalePal(inoise8(
+                                                i * (thisScale / 5) - cfg.width * (thisScale / 5) / 2,
+                                                j * (thisScale / 5) - cfg.length * (thisScale / 5) / 2,
+                                                (now.weekMs >> 1) * CUR_PRES.speed / 255)),
+                                            255, LINEARBLEND));
             }
           }
 
@@ -169,7 +170,7 @@ void effectsRoutine() {
 
       case 7: // ==================================== ОГОНЬ 2020 ====================================
         FastLED.clear();
-        if (cfg.deviceType > 1) {         // 2D огонь          
+        if (cfg.deviceType > 1) {         // 2D огонь
           fire2020(CUR_PRES.scale, thisLength);
         } else {                          // 1D огонь
           static byte heat[MAX_LEDS];

@@ -9,17 +9,15 @@ void parsing() {
 
     buf[n] = NULL;
     DEBUGLN(buf);   // пакет вида <ключ>,<канал>,<тип>,<дата1>,<дата2>...
-    mString pars(buf, sizeof(buf));
-    if (!pars.startsWith(GL_KEY)) return;   // не наш ключ
-    byte keyLen = strlen(GL_KEY);
+    byte keyLen = strchr(buf, ',') - buf;     // indexof
+    if (strncmp(buf, GL_KEY, keyLen)) return; // не наш ключ
 
     byte data[MAX_PRESETS * PRES_SIZE + 5];
-    memset(data, 0, MAX_PRESETS * PRES_SIZE + keyLen);
+    memset(data, 0, MAX_PRESETS * PRES_SIZE + 5);
     int count = 0;
     char *str, *p = buf + keyLen;  // сдвиг до даты
     char *ssid, *pass;
-    uint32_t city = 0;
-    uint16_t stripL, stripW;
+
     while ((str = strtok_r(p, ",", &p)) != NULL) {
       uint32_t thisInt = atoi(str);
       data[count++] = (byte)thisInt;
@@ -28,9 +26,16 @@ void parsing() {
         if (count == 5) pass = str;
       }
       if (data[1] == 1) {
-        if (count == 16) stripL = thisInt;
-        if (count == 17) stripW = thisInt;
-        if (count == 18) city = thisInt;
+        if (count == 15) cfg.length = thisInt;
+        if (count == 16) cfg.width = thisInt;
+        if (count == 17) cfg.GMT = byte(thisInt);
+        if (count == 18) cfg.cityID = thisInt;
+        if (count == 19) cfg.mqtt = byte(thisInt);
+        if (count == 20) strcpy(cfg.mqttID, str);
+        if (count == 21) strcpy(cfg.mqttHost, str);
+        if (count == 22) cfg.mqttPort = thisInt;
+        if (count == 23) strcpy(cfg.mqttLogin, str);
+        if (count == 24) strcpy(cfg.mqttPass, str);
       }
     }
 
@@ -46,7 +51,7 @@ void parsing() {
     if (data[0] != cfg.group) return;     // не наш адрес, выходим
 
     switch (data[1]) {  // тип 0 - control, 1 - config, 2 - effects, 3 - dawn, 4 - from master, 5 - palette
-      case 0: DEBUGLN("Control");
+      case 0: DEBUGLN("Control"); blinkTmr.restart();
         switch (data[2]) {
           case 0: controlHandler(0); break;               // выкл
           case 1: controlHandler(1); break;               // вкл
@@ -81,24 +86,21 @@ void parsing() {
           case 13:                                        // выключить через
             if (data[3] == 0) turnoffTmr.stop();
             else {
-              turnoffTmr.setInterval((uint32_t)data[3] * 60000ul);
-              turnoffTmr.restart();
+              fadeDown((uint32_t)data[3] * 60000ul);
             }
             break;
         }
         EE_updCfg();
         break;
 
-      case 1: DEBUGLN("Config");
+      case 1: DEBUGLN("Config"); blinkTmr.restart();
         FOR_i(0, CFG_SIZE) {
           *((byte*)&cfg + i) = data[i + 2];   // загоняем в структуру
         }
-        cfg.length = stripL;
-        cfg.width = stripW;
-        cfg.cityID = city;
-
-        if (cfg.length > MAX_LEDS) cfg.length = MAX_LEDS;
-        if (cfg.deviceType == GL_TYPE_STRIP) cfg.width = 1;
+        if (cfg.deviceType == GL_TYPE_STRIP) {
+          if (cfg.length > MAX_LEDS) cfg.length = MAX_LEDS;
+          cfg.width = 1;
+        }
         if (cfg.length * cfg.width > MAX_LEDS) cfg.width = MAX_LEDS / cfg.length;
         ntp.setTimeOffset((cfg.GMT - 13) * 3600);
         FastLED.setMaxPowerInVoltsAndMilliamps(STRIP_VOLT, cfg.maxCur * 100);
@@ -115,13 +117,15 @@ void parsing() {
             *((byte*)&preset + j * PRES_SIZE + i) = data[j * PRES_SIZE + i + 3]; // загоняем в структуру
           }
         }
-        if (!cfg.rotation) setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
+        //if (!cfg.rotation) setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
+        setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
         EE_updatePreset();
-        presetRotation(true); // форсировать смену режима
+        //presetRotation(true); // форсировать смену режима
+        holdPresTmr.restart();
         loading = true;
         break;
 
-      case 3: DEBUGLN("Dawn");
+      case 3: DEBUGLN("Dawn"); blinkTmr.restart();
         FOR_i(0, (2 + 3 * 7)) {
           *((byte*)&dawn + i) = data[i + 2]; // загоняем в структуру
         }
@@ -131,7 +135,7 @@ void parsing() {
       case 4: DEBUGLN("From master");
         if (cfg.role == GL_SLAVE) {
           switch (data[2]) {
-            case 0: setPower(data[3]); break;     // вкл выкл
+            case 0: fade(data[3]); break;     // вкл выкл
             case 1: setPreset(data[3]); break;    // пресет
             case 2: cfg.bright = data[3]; break;  // яркость
           }
@@ -139,7 +143,7 @@ void parsing() {
         }
         break;
 
-      case 5: DEBUGLN("Palette");
+      case 5: DEBUGLN("Palette"); blinkTmr.restart();
         FOR_i(0, 1 + 16 * 3) {
           *((byte*)&pal + i) = data[i + 2]; // загоняем в структуру
         }
@@ -147,7 +151,7 @@ void parsing() {
         EE_updatePal();
         break;
 
-      case 6: DEBUGLN("Time");
+      case 6: DEBUGLN("Time"); blinkTmr.restart();
         if (!cfg.WiFimode) {  // если мы AP
           now.day = data[2];
           now.hour = data[3];

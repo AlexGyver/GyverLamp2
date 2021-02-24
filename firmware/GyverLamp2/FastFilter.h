@@ -8,6 +8,10 @@
 
 class FastFilter {
   public:
+	FastFilter(byte k = 20, int dt = 0) {
+		setK(k);
+		setDt(dt);
+	}
     void setK(byte k) {
       _k1 = k;
       _k2 = 32 - k;

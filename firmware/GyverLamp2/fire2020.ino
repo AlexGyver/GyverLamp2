@@ -31,7 +31,7 @@ void fire2020(byte scale, int len) {
   }
   for (uint8_t i = 0; i < cfg.width; i++) {
     for (uint8_t j = 0; j < len; j++) {
-      leds[getPix(i, len - 1U - j)] = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], qsub8(inoise8(i * deltaValue, (j + ff_y + random8(2)) * deltaHue, ff_z), shiftHue[j]), 255U);
+      leds[getPix(i, len - 1U - j)] = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(qsub8(inoise8(i * deltaValue, (j + ff_y + random8(2)) * deltaHue, ff_z), shiftHue[j])), 255U);
     }
   }
 

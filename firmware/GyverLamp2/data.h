@@ -16,7 +16,7 @@
 #define GL_REACT_LEN 3
 #define GL_SLAVE 0
 #define GL_MASTER 1
-#define MAX_PRESETS 25      // макс количество режимов
+#define MAX_PRESETS 40      // макс количество режимов
 
 // ------------------- МАКРО --------------------
 #ifdef DEBUG_SERIAL
@@ -61,9 +61,8 @@ struct Palette {
   byte strip[16 * 3];
 };
 
-#define CFG_SIZE 13
+#define CFG_SIZE 12
 struct Config {
-  byte GMT = 3;           // часовой пояс +13
   byte bright = 100;      // яркость
   byte adcMode = 1;       // режим ацп (1 выкл, 2 ярк, 3 муз)
   byte minBright = 0;     // мин яркость
@@ -79,7 +78,15 @@ struct Config {
 
   int16_t length = 16;    // длина ленты
   int16_t width = 16;     // ширина матрицы
+
+  byte GMT = 3;           // часовой пояс +13
   uint32_t cityID = 1;    // city ID
+  bool mqtt = 0;          // mqtt
+  char mqttID[32];        //
+  char mqttHost[32];      //
+  int mqttPort = 0;       //
+  char mqttLogin[16];     //
+  char mqttPass[16];      //
 
   byte state = 1;         // состояние 0 выкл, 1 вкл
   byte group = 1;         // группа девайса (1-10)

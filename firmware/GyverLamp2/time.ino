@@ -5,7 +5,10 @@ void setupTime() {
   if (cfg.WiFimode) {
     // если подключены - запрашиваем время с сервера
     ntp.begin();
-    if (ntp.update() && !gotNTP) gotNTP = true;
+    if (ntp.update() && !gotNTP) {
+      gotNTP = true;
+      DEBUGLN("Got ntp");
+    }
   }
 }
 
@@ -31,11 +34,11 @@ void updateTime() {
     if (now.min % NTP_UPD_PRD == 0 && now.sec == 0) {
       // берём время с интернета каждую NTP_UPD_PRD минуту, ставим флаг что данные с NTP получены, значит мы онлайн
       if (ntp.update() && !gotNTP) gotNTP = true;
-    }
-    checkDawn();
+    }    
   } else {          // если нет
     now.tick();     // тикаем своим счётчиком
   }
+  if (gotNTP || gotTime) checkDawn();
 }
 
 void sendTimeToSlaves() {
@@ -53,9 +56,11 @@ void checkDawn() {
     int dawnMinute = dawn.hour[now.day] * 60 + dawn.minute[now.day] - dawn.time;
     if (dawnMinute < 0) dawnMinute += 1440;
     if (dawnMinute == now.hour * 60 + now.min) {
-      DEBUGLN("dawn start");
+      DEBUG("dawn start ");
+      DEBUGLN(dawn.time * 60000ul);
       dawnTmr.setInterval(dawn.time * 60000ul);
       dawnTmr.restart();
+      FastLED.setBrightness(255);
     }
   }
 }
@@ -65,8 +70,8 @@ void checkWorkTime() {
   byte curState = isWorkTime(now.hour, cfg.workFrom, cfg.workTo);
   if (prevState != curState) {    // переключение расписания
     prevState = curState;
-    if (curState && !cfg.state && !cfg.manualOff) setPower(1);  // нужно включить, а лампа выключена и не выключалась вручную
-    if (!curState && cfg.state) setPower(0);                    // нужно выключить, а лампа включена
+    if (curState && !cfg.state && !cfg.manualOff) fade(1);  // нужно включить, а лампа выключена и не выключалась вручную
+    if (!curState && cfg.state) fade(0);                    // нужно выключить, а лампа включена
   }
 }
 

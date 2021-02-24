@@ -1,5 +1,6 @@
 #if (USE_ADC == 1)
 void setupADC() {
+  clap.setTimeout(500);
   low.setDt(0);
   low.setPeriod(0);
   low.setWindow(0);
@@ -32,32 +33,36 @@ void setupADC() {
 
 
 void checkAnalog() {
-  if (cfg.state) {
-    switch (cfg.adcMode) {
-      case GL_ADC_NONE: break;
-      case GL_ADC_BRI: checkPhot(); break;
-      case GL_ADC_MIC: checkMusic(); break;
-      case GL_ADC_BOTH:
-        {
-          static timerMillis tmr(1000, 1);
-          if (tmr.isReady()) {
-            switchToPhot();
-            phot.setRaw(analogRead(A0));
-            switchToMic();
-          } else {
-            checkMusic();
-          }
-          phot.compute();
+  //if (cfg.state) {
+  switch (cfg.adcMode) {
+    case GL_ADC_NONE: break;
+    case GL_ADC_BRI: checkPhot(); break;
+    case GL_ADC_MIC: checkMusic(); break;
+    case GL_ADC_BOTH:
+      {
+        static timerMillis tmr(1000, 1);
+        if (tmr.isReady()) {
+          switchToPhot();
+          phot.setRaw(analogRead(A0));
+          switchToMic();
+        } else {
+          checkMusic();
         }
-        break;
-    }
+        phot.compute();
+      }
+      break;
   }
+  //}
 }
 
 void checkMusic() {
-  if (CUR_PRES.advMode == GL_ADV_VOL) {   // громкость
-    vol.tick();
-  } else if (CUR_PRES.advMode == GL_ADV_LOW || CUR_PRES.advMode == GL_ADV_HIGH) {   // частоты
+  vol.tick();
+#if (USE_CLAP == 1)
+  clap.tick(vol.getRawMax());
+  if (clap.hasClaps(2)) controlHandler(!cfg.state);
+#endif
+  
+  if (CUR_PRES.advMode == GL_ADV_LOW || CUR_PRES.advMode == GL_ADV_HIGH) {   // частоты
     int raw[FFT_SIZE], spectr[FFT_SIZE];
     for (int i = 0; i < FFT_SIZE; i++) raw[i] = analogRead(A0);
     FFT(raw, spectr);

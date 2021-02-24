@@ -1,4 +1,13 @@
 /*
+  Версия 0.17b
+  Автосмена отключается 30 сек во время настройки режимов
+  Убрана кнопка upload в режимах
+  Лампа чуть мигает при получении данных
+  Кастом палитра работает на огне 2020
+  Вкл выкл двумя хлопками
+  Плавное выключение
+  Починил рассвет
+  
   Версия 0.16b
   Исправлен масштаб огня 2020
   Фикс невыключения рассвета
@@ -27,13 +36,12 @@
   Выключение по таймеру теперь плавное
   Добавлен рассвет
 
-  TODO:
+  TODO:  
   плавная смена режимов
   4 клика вкл выкл смену?
   Mqtt?
   Базовый пак
   Предложения Серёги крутского
-  Убрать аплод?
   Эффект погода https://it4it.club/topic/40-esp8266-i-parsing-pogodyi-s-openweathermap/
   Эффект часы
 */
@@ -55,6 +63,7 @@
 
 // ------------- АЦП --------------
 #define USE_ADC 1           // можно выпилить АЦП
+#define USE_CLAP 1          // два хлопка в ладоши вкл выкл лампу
 #define MIC_VCC 12          // питание микрофона GPIO12 (D6 на wemos/node)
 #define PHOT_VCC 14         // питание фоторезистора GPIO14 (D5 на wemos/node)
 
@@ -77,10 +86,10 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 016      // код версии прошивки
+#define GL_VERSION 017      // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 52           // ключ сброса WiFi (измени для сброса всех настроек)
+#define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
@@ -113,6 +122,7 @@ const char WiFiPassword[] = "12345678";
 #include <EEPROM.h>       // епром
 #include "ESP8266httpUpdate.h"  // OTA
 #include "mString.h"      // стринг билдер
+#include "Clap.h"         // обработка хлопков
 
 // ------------------- ДАТА --------------------
 Config cfg;
@@ -126,10 +136,11 @@ NTPClient ntp(ntpUDP);
 CRGB leds[MAX_LEDS];
 Time now;
 Button btn(BTN_PIN);
-timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000), dawnTmr;
+timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;
+Clap clap;
 
 byte btnClicks = 0, brTicks = 0;
 unsigned char matrixValue[11][16];
@@ -145,7 +156,7 @@ void setup() {
   Serial.begin(115200);
   DEBUGLN();
 #endif
-  EEPROM.begin(512);    // старт епром
+  EEPROM.begin(1000);   // старт епром
   startStrip();         // старт ленты
   btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
   EE_startup();         // читаем епром

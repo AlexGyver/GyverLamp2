@@ -49,8 +49,8 @@ class VolAnalyzer {
     }
     bool tick(int thisRead = -1) {
       volF.compute();
-      if (millis() - tmr4 >= _ampliDt) {    // период сглаживания амплитуды
-        tmr4 = millis();
+      if (millis() - tmr3 >= _ampliDt) {    // период сглаживания амплитуды
+        tmr3 = millis();
         maxF.setRaw(maxs);
         minF.setRaw(mins);
         maxF.compute();
@@ -68,11 +68,13 @@ class VolAnalyzer {
             maxF.setFil(thisRead);
             minF.setFil(thisRead);
           }
+
           if (++count >= _window) {           // выборка завершена
             tmr1 = millis();
             raw = max;
             if (max > maxs) maxs = max;       // максимумы среди максимумов
             if (max < mins) mins = max;       // минимумы реди максимумов
+            rawMax = maxs;
             maxF.checkPass(max);              // проверка выше максимума
             if (getMax() - getMin() < _trsh) max = 0; // если окно громкости меньше порого то 0
             else max = constrain(map(max, getMin(), getMax(), _volMin, _volMax), _volMin, _volMax); // перевод в громкость
@@ -88,6 +90,9 @@ class VolAnalyzer {
 
     int getRaw() {
       return raw;
+    }
+    int getRawMax() {
+      return rawMax;
     }
     int getVol() {
       return volF.getFil();
@@ -108,15 +113,16 @@ class VolAnalyzer {
 
   private:
     int _pin;
-    int _dt = 600;      // 600 мкс между сэмплами достаточно для музыки
-    int _period = 5;    // 5 мс между выборами достаточно
+    int _dt = 500;      // 500 мкс между сэмплами достаточно для музыки
+    int _period = 4;    // 4 мс между выборами достаточно
     int _ampliDt = 150;
-    int _window = 20;   // при таком размере окна получаем длительность оцифровки 12 мс, вполне хватает
-    uint32_t tmr1 = 0, tmr2 = 0, tmr3 = 0, tmr4 = 0;
+    int _window = 20;   // при таком размере окна получаем длительность оцифровки вполне хватает
+    uint32_t tmr1 = 0, tmr2 = 0, tmr3 = 0;
     int raw = 0;
+    int rawMax = 0;
     int max = 0, count = 0;
     int maxs = 0, mins = 1023;
     int _volMin = 0, _volMax = 100, _trsh = 30;
-    bool _pulse = 0, _first = 0;
+    bool _pulse = 0, _first = 0;    
     FastFilter minF, maxF, volF;
 };
