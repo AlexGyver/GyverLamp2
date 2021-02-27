@@ -14,14 +14,14 @@ void presetRotation(bool force) {
 }
 
 void changePreset(int dir) {
-  if (!cfg.rotation) {    // ручная смена
+  //if (!cfg.rotation) {    // ручная смена
     cfg.curPreset += dir;
     if (cfg.curPreset >= cfg.presetAmount) cfg.curPreset = 0;
     if (cfg.curPreset < 0) cfg.curPreset = cfg.presetAmount - 1;
     holdPresTmr.restart();
     DEBUG("Preset changed to ");
     DEBUGLN(cfg.curPreset);
-  }
+  //}
 }
 
 void setPreset(byte pres) {

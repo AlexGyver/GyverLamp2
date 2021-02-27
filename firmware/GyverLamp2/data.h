@@ -56,6 +56,7 @@ const char NTPserver[] = "pool.ntp.org";
 //"ntp2.stratum2.ru"
 //"ntp.msk-ix.ru"
 
+#define PAL_SIZE 49
 struct Palette {
   byte size = 1;
   byte strip[16 * 3];
@@ -120,6 +121,7 @@ struct Preset {
   byte rnd = 0;           // случайный (0/1)
 };
 
+#define DAWN_SIZE 23
 struct Dawn {
   byte state[7] = {0, 0, 0, 0, 0, 0, 0};  // (1/0)
   byte hour[7] = {0, 0, 0, 0, 0, 0, 0};   // (0.. 59)

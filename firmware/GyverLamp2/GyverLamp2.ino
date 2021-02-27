@@ -1,4 +1,12 @@
 /*
+  Версия 0.18b
+  Уменьшена чувствительность хлопков
+  Увеличена плавность светомузыки
+  Переделана сетевая политика
+  Микрофон и датчик света опрашивает только мастер и отсылает данные слейвам своей группы
+  4 клика - включить первый режим
+  Отправка точного времени на лампу в режиме АР для работы рассвета и синхронизации эффектов
+
   Версия 0.17b
   Автосмена отключается 30 сек во время настройки режимов
   Убрана кнопка upload в режимах
@@ -7,17 +15,17 @@
   Вкл выкл двумя хлопками
   Плавное выключение
   Починил рассвет
-  
+
   Версия 0.16b
   Исправлен масштаб огня 2020
   Фикс невыключения рассвета
-  
+
   Версия 0.14b
   Мелкие баги
   Вернул искры огню
   Добавлены палитры
   Добавлен огонь 2020
-  
+
   Версия 0.13b
   Улучшена стабильность
 
@@ -36,9 +44,8 @@
   Выключение по таймеру теперь плавное
   Добавлен рассвет
 
-  TODO:  
+  TODO:
   плавная смена режимов
-  4 клика вкл выкл смену?
   Mqtt?
   Базовый пак
   Предложения Серёги крутского
@@ -86,7 +93,7 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 017      // код версии прошивки
+#define GL_VERSION 18       // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
@@ -94,17 +101,18 @@ const char WiFiPassword[] = "12345678";
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
-//#define MAX_LEDS 1200
+#define MAX_LEDS 1200
 
 // esp01
-//#define BTN_PIN 0
-//#define STRIP_PIN 2
-//#define USE_ADC 0
+#define BTN_PIN 0
+#define STRIP_PIN 2
+#define USE_ADC 0
 
 // GL2 module
 //#define STRIP_PIN 5     // GPIO5 на gl module (D1 на wemos/node)
 
 // ---------- БИБЛИОТЕКИ -----------
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include "data.h"         // данные
 #include "Time.h"         // часы
 #include "TimeRandom.h"   // случайные числа по времени
@@ -115,7 +123,6 @@ const char WiFiPassword[] = "12345678";
 #include "timerMillis.h"  // таймер миллис
 #include "VolAnalyzer.h"  // анализатор громкости
 #include "FFT_C.h"        // фурье
-#define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>      // лента
 #include <ESP8266WiFi.h>  // базовая либа есп
 #include <WiFiUdp.h>      // общение по UDP
@@ -146,7 +153,9 @@ byte btnClicks = 0, brTicks = 0;
 unsigned char matrixValue[11][16];
 bool gotNTP = false, gotTime = false;
 bool loading = true;
-void blink8(CRGB color);
+int udpLength = 0, udpWidth = 0;
+byte udpScale = 0, udpBright = 0;
+
 
 // ------------------- SETUP --------------------
 void setup() {

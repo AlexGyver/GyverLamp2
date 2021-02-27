@@ -23,6 +23,17 @@ void timeTicker() {
   }
 }
 
+void setTime(byte day, byte hour, byte min, byte sec) {
+  if (!cfg.WiFimode || !gotNTP) {  // если мы AP или не получили NTP
+    now.day = day;
+    now.hour = hour;
+    now.min = min;
+    now.sec = sec;
+    now.setMs(0);
+    gotTime = true;
+  }  
+}
+
 void updateTime() {
   if (cfg.WiFimode && WiFi.status() == WL_CONNECTED) {  // если вайфай подключен
     now.sec = ntp.getSeconds();
@@ -38,7 +49,7 @@ void updateTime() {
   } else {          // если нет
     now.tick();     // тикаем своим счётчиком
   }
-  if (gotNTP || gotTime) checkDawn();
+  if (gotNTP || gotTime) checkDawn();   // рассвет, если знаем точное время
 }
 
 void sendTimeToSlaves() {
@@ -75,29 +86,15 @@ void checkWorkTime() {
   }
 }
 
-void sendTime() {
-  IPAddress ip = WiFi.localIP();
-  ip[3] = 255;
-  char reply[25] = GL_KEY;
+void sendTime() {  
+  char reply[25];
   mString packet(reply, sizeof(reply));
   packet.clear();
-  packet += GL_KEY;
-  packet += ',';
-  packet += 0;
-  packet += ',';
-  packet += now.day;
-  packet += ',';
-  packet += now.hour;
-  packet += ',';
-  packet += now.min;
-  packet += ',';
-  packet += now.sec;
+  packet = packet + GL_KEY + ",0," + now.day + ',' + now.hour + ',' + now.min + ',' + now.sec;
 
   DEBUG("Sending time: ");
   DEBUGLN(reply);
-  Udp.beginPacket(ip, 8888);
-  Udp.write(reply);
-  Udp.endPacket();
+  sendUDP(reply);
 }
 
 bool isWorkTime(byte t, byte from, byte to) {

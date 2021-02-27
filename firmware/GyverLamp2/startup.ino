@@ -86,9 +86,7 @@ void startWiFi() {
   if (!cfg.WiFimode) setupAP();   // режим точки доступа
   else setupLocal();              // подключаемся к точке
 
-  DEBUG("UDP port: ");
-  DEBUGLN(8888);
-  Udp.begin(8888);
+  restartUDP();
   FastLED.clear();
   FastLED.show();
 }

@@ -2,18 +2,29 @@ void parsing() {
   if (Udp.parsePacket()) {
     static uint32_t tmr = 0;
     static char buf[UDP_TX_PACKET_MAX_SIZE + 1];
-
     int n = Udp.read(buf, UDP_TX_PACKET_MAX_SIZE);
-    if (millis() - tmr < 500) return;  // принимаем посылки не чаще 2 раз в секунду
-    tmr = millis();
 
     buf[n] = NULL;
     DEBUGLN(buf);   // пакет вида <ключ>,<канал>,<тип>,<дата1>,<дата2>...
     byte keyLen = strchr(buf, ',') - buf;     // indexof
     if (strncmp(buf, GL_KEY, keyLen)) return; // не наш ключ
 
-    byte data[MAX_PRESETS * PRES_SIZE + 5];
-    memset(data, 0, MAX_PRESETS * PRES_SIZE + 5);
+    if (buf[keyLen + 1] == '7') {   // принимаем данные звука и ацп
+      int data[4];
+      mString ints(buf + keyLen + 3, 100);
+      ints.parseInts(data, 4);
+      udpLength = data[0];
+      udpScale = data[1];
+      udpWidth = data[2];
+      udpBright = data[3];
+      return;
+    }
+
+    if (millis() - tmr < 500) return;  // принимаем посылки не чаще 2 раз в секунду
+    tmr = millis();
+
+    byte data[MAX_PRESETS * PRES_SIZE + 10];
+    memset(data, 0, MAX_PRESETS * PRES_SIZE + 10);
     int count = 0;
     char *str, *p = buf + keyLen;  // сдвиг до даты
     char *ssid, *pass;
@@ -39,8 +50,9 @@ void parsing() {
       }
     }
 
-    // широковещательный запрос времени для local устройств в сети AP лампы
+    // широковещательный запрос (адрес 0) времени для local устройств в сети AP лампы
     if (data[0] == 0 && cfg.WiFimode && !gotNTP) {
+      
       now.day = data[1];
       now.hour = data[2];
       now.min = data[3];
@@ -62,7 +74,7 @@ void parsing() {
           case 6: setPreset(data[3] - 1); break;          // конкретный пресет data[3]
           case 7: cfg.WiFimode = data[3]; EE_updCfgRst(); break;  // смена режима WiFi
           case 8: cfg.role = data[3]; break;              // смена роли
-          case 9: cfg.group = data[3]; break;             // смена группы
+          case 9: cfg.group = data[3]; restartUDP(); break;   // смена группы
           case 10:                                        // установка настроек WiFi
             strcpy(cfg.ssid, ssid);
             strcpy(cfg.pass, pass);
@@ -90,6 +102,7 @@ void parsing() {
             }
             break;
         }
+        if (data[2] < 7) setTime(data[3], data[4], data[5], data[6]);
         EE_updCfg();
         break;
 
@@ -97,6 +110,7 @@ void parsing() {
         FOR_i(0, CFG_SIZE) {
           *((byte*)&cfg + i) = data[i + 2];   // загоняем в структуру
         }
+        setTime(data[CFG_SIZE + 10 + 2], data[CFG_SIZE + 10 + 3], data[CFG_SIZE + 10 + 4], data[CFG_SIZE + 10 + 5]);
         if (cfg.deviceType == GL_TYPE_STRIP) {
           if (cfg.length > MAX_LEDS) cfg.length = MAX_LEDS;
           cfg.width = 1;
@@ -111,31 +125,37 @@ void parsing() {
         break;
 
       case 2: DEBUGLN("Preset");
-        cfg.presetAmount = data[2];   // кол-во режимов
-        FOR_j(0, cfg.presetAmount) {
-          FOR_i(0, PRES_SIZE) {
-            *((byte*)&preset + j * PRES_SIZE + i) = data[j * PRES_SIZE + i + 3]; // загоняем в структуру
+        {
+          cfg.presetAmount = data[2];   // кол-во режимов
+          FOR_j(0, cfg.presetAmount) {
+            FOR_i(0, PRES_SIZE) {
+              *((byte*)&preset + j * PRES_SIZE + i) = data[j * PRES_SIZE + i + 3]; // загоняем в структуру
+            }
           }
+          //if (!cfg.rotation) setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
+          byte dataStart = cfg.presetAmount * PRES_SIZE + 3;
+          setPreset(data[dataStart] - 1);
+          setTime(data[dataStart + 1], data[dataStart + 2], data[dataStart + 3], data[dataStart + 4]);
+
+          EE_updatePreset();
+          //presetRotation(true); // форсировать смену режима
+          holdPresTmr.restart();
+          loading = true;
         }
-        //if (!cfg.rotation) setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
-        setPreset(data[cfg.presetAmount * PRES_SIZE + 3] - 1);
-        EE_updatePreset();
-        //presetRotation(true); // форсировать смену режима
-        holdPresTmr.restart();
-        loading = true;
         break;
 
       case 3: DEBUGLN("Dawn"); blinkTmr.restart();
-        FOR_i(0, (2 + 3 * 7)) {
+        FOR_i(0, DAWN_SIZE) {
           *((byte*)&dawn + i) = data[i + 2]; // загоняем в структуру
         }
+        setTime(data[DAWN_SIZE + 2], data[DAWN_SIZE + 3], data[DAWN_SIZE + 4], data[DAWN_SIZE + 5]);
         EE_updateDawn();
         break;
 
       case 4: DEBUGLN("From master");
         if (cfg.role == GL_SLAVE) {
           switch (data[2]) {
-            case 0: fade(data[3]); break;     // вкл выкл
+            case 0: fade(data[3]); break;         // вкл выкл
             case 1: setPreset(data[3]); break;    // пресет
             case 2: cfg.bright = data[3]; break;  // яркость
           }
@@ -144,20 +164,12 @@ void parsing() {
         break;
 
       case 5: DEBUGLN("Palette"); blinkTmr.restart();
-        FOR_i(0, 1 + 16 * 3) {
+        FOR_i(0, PAL_SIZE) {
           *((byte*)&pal + i) = data[i + 2]; // загоняем в структуру
         }
+        setTime(data[PAL_SIZE + 2], data[PAL_SIZE + 3], data[PAL_SIZE + 4], data[PAL_SIZE + 5]);
         updPal();
         EE_updatePal();
-        break;
-
-      case 6: DEBUGLN("Time"); blinkTmr.restart();
-        if (!cfg.WiFimode) {  // если мы AP
-          now.day = data[2];
-          now.hour = data[3];
-          now.min = data[4];
-        }
-        gotTime = true;
         break;
     }
     FastLED.clear();    // на всякий случай
@@ -166,27 +178,16 @@ void parsing() {
 
 void sendToSlaves(byte data1, byte data2) {
   if (cfg.role == GL_MASTER) {
-    IPAddress ip = WiFi.localIP();
-    ip[3] = 255;
-
     char reply[20];
     mString packet(reply, sizeof(reply));
     packet.clear();
-    packet += GL_KEY;
-    packet += ',';
-    packet += cfg.group;
-    packet += ",4,";
-    packet += data1;
-    packet += ',';
-    packet += data2;
+    packet = packet + GL_KEY + ',' + cfg.group + ",4," + data1 + ',' + data2;
 
     DEBUG("Sending to Slaves: ");
     DEBUGLN(reply);
 
     FOR_i(0, 3) {
-      Udp.beginPacket(ip, 8888);
-      Udp.write(reply);
-      Udp.endPacket();
+      sendUDP(reply);
       delay(10);
     }
   }

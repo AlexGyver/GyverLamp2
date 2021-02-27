@@ -16,10 +16,33 @@ void effectsRoutine() {
   }
 
   if (cfg.state && effTmr.isReady()) {
-    int thisLength = getLength();
-    byte thisScale = getScale();
-    int thisWidth = (cfg.deviceType > 1) ? cfg.width : 1;
-    byte thisBright = getBright();
+    int thisLength, thisWidth;
+    byte thisScale, thisBright;
+
+    if (cfg.adcMode > 1) {    // музыка или яркость
+      if (cfg.role) {
+        thisLength = getLength();
+        thisScale = getScale();
+        thisWidth = (cfg.deviceType > 1) ? cfg.width : 1;
+        thisBright = getBright();
+
+        char reply[25];
+        mString packet(reply, sizeof(reply));
+        packet.clear();
+        packet = packet + GL_KEY + ",7," + thisLength + ',' + thisScale + ',' + thisWidth + ',' + thisBright;
+        sendUDP(reply);
+      } else {
+        thisLength = udpLength;
+        thisScale = udpScale;
+        thisWidth = udpWidth;
+        thisBright = udpBright;
+      }
+    } else {                  // нет
+      thisLength = getLength();
+      thisScale = getScale();
+      thisWidth = (cfg.deviceType > 1) ? cfg.width : 1;
+      thisBright = getBright();
+    }
 
     if (turnoffTmr.running()) thisBright = scaleFF(thisBright, 255 - turnoffTmr.getLength8());
     else if (blinkTmr.runningStop()) thisBright = scaleFF(thisBright, blinkTmr.getLength8());
@@ -271,17 +294,6 @@ void updPal() {
     paletteArr[0][i] = CRGB(pal.strip[i * 3], pal.strip[i * 3 + 1], pal.strip[i * 3 + 2]);
   }
   if (pal.size < 16) paletteArr[0][pal.size] = paletteArr[0][0];
-}
-
-void blink8(CRGB color) {
-  FOR_i(0, 3) {
-    fill_solid(leds, 8, color);
-    FastLED.show();
-    delay(300);
-    FastLED.clear();
-    FastLED.show();
-    delay(300);
-  }
 }
 
 byte scalePal(byte val) {
