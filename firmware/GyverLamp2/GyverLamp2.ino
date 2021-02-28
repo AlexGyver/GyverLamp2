@@ -88,7 +88,7 @@ const char WiFiPassword[] = "12345678";
 // ------------ Прочее -------------
 #define GL_VERSION 017      // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
-//#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
+//#define DEBUG_SERIAL_LAMP // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
@@ -152,7 +152,7 @@ void blink8(CRGB color);
 void setup() {
   delay(2000);          // ждём старта есп
   memset(matrixValue, 0, sizeof(matrixValue));
-#ifdef DEBUG_SERIAL
+#ifdef DEBUG_SERIAL_LAMP
   Serial.begin(115200);
   DEBUGLN();
 #endif
