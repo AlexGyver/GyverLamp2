@@ -9,7 +9,7 @@ class Time {
     uint32_t weekS = 0;
 
     int getMs() {
-      return (millis() - tmr);
+      return (tmr - millis());
     }
     void setMs(int ms) {
       tmr = millis() + ms;

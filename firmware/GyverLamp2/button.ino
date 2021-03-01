@@ -27,11 +27,17 @@ void button() {
         changePreset(-1);
         sendToSlaves(1, cfg.curPreset);
         break;
+      case 4:
+        setPreset(0);
+        sendToSlaves(1, cfg.curPreset);
+        break;
       case 5:
         cfg.role = 0;
+        blink16(CRGB::DarkSlateBlue);
         break;
       case 6:
         cfg.role = 1;
+        blink16(CRGB::Maroon);
         break;
     }
     EE_updateCfg();

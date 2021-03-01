@@ -86,15 +86,13 @@ void startWiFi() {
   if (!cfg.WiFimode) setupAP();   // режим точки доступа
   else setupLocal();              // подключаемся к точке
 
-  DEBUG("UDP port: ");
-  DEBUGLN(8888);
-  Udp.begin(8888);
+  restartUDP();
   FastLED.clear();
   FastLED.show();
 }
 
 void setupAP() {
-  blink8(CRGB::Yellow);
+  blink16(CRGB::Yellow);
   WiFi.disconnect();
   WiFi.mode(WIFI_AP);
   delay(100);
@@ -131,12 +129,12 @@ void setupLocal() {
         leds[count] = CRGB::Yellow;
         FastLED.show();
         count += dir;
-        if (count >= 7 || count <= 0) dir *= -1;
+        if (count >= 15 || count <= 0) dir *= -1;
         delay(50);
       }
       if (connect) {
         connTmr.stop();
-        blink8(CRGB::Green);
+        blink16(CRGB::Green);
         server.begin();
         DEBUG("Connected! Local IP: ");
         DEBUGLN(WiFi.localIP());
@@ -144,18 +142,13 @@ void setupLocal() {
         return;
       } else {
         DEBUGLN("Failed!");
-        blink8(CRGB::Red);
+        blink16(CRGB::Red);
         failCount++;
         tmr = millis();
         if (failCount >= 3) {
           connTmr.restart();    // попробуем позже
           setupAP();
           return;
-          /*DEBUGLN("Reboot to AP!");
-            cfg.WiFimode = 0;
-            EE_updCfg();
-            delay(100);
-            ESP.restart();*/
         }
       }
     }
@@ -166,11 +159,11 @@ void checkUpdate() {
   if (cfg.update) {
     if (cfg.version != GL_VERSION) {
       cfg.version = GL_VERSION;
-      blink8(CRGB::Cyan);
+      blink16(CRGB::Cyan);
       DEBUG("Update to");
       DEBUGLN(GL_VERSION);
     } else {
-      blink8(CRGB::Blue);
+      blink16(CRGB::Blue);
       DEBUG("Update to current");
     }
     cfg.update = 0;
@@ -181,6 +174,15 @@ void checkUpdate() {
 void tryReconnect() {
   if (connTmr.isReady()) {
     DEBUGLN("Reconnect");
-    setupLocal();
+    startWiFi();
   }
+}
+
+void misc() {
+  memset(matrixValue, 0, sizeof(matrixValue));
+  char GLkey[] = GL_KEY;
+  portNum = 17;
+  for (byte i = 0; i < strlen(GLkey); i++) portNum *= GLkey[i];
+  portNum %= 15000;
+  portNum += 50000;
 }
