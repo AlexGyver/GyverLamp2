@@ -68,7 +68,7 @@ void setPower(bool state) {
     FastLED.clear();
     FastLED.show();
   }
-  if (millis() - udpTmr >= 1000) sendToSlaves(0, cfg.state); // пиздец костыль
+  if (millis() - udpTmr >= 1000) sendToSlaves(0, cfg.state); // пиздец костыль (не отправлять слейвам если команда получена по воздуху)
   DEBUGLN(state ? "Power on" : "Power off");
 }
 

@@ -1,4 +1,10 @@
 /*
+  Версия 0.20b
+  Оптимизация
+  Исправление критических ошибок
+  Пофикшено падение АР
+  Пофикшено падение лампы во время светомузыки
+
   Версия 0.19b
   Минимальная версия приложения 1.17!!!
   Почищен мусор, оптимизация, повышена стабильность и производительность
@@ -63,8 +69,9 @@
 
 // ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
 // ДЛЯ КОМПИЛЯЦИИ ПРОШИВКИ ПОД NODEMCU/WEMOS/ESP01/ESP12 ВЫБИРАТЬ
-// Инструменты/Плата Generic ESP8266
-// Инструменты/Flash Size 4MB (FS:2MB OTA)
+// Инструменты / Плата Generic ESP8266
+// Инструменты / Flash Size 4MB (FS:2MB OTA)
+// CPU Frequency / 160 MHz (рекомендуется для стабильности светомузыки!!!)
 // При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
 // ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
 // FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
@@ -101,9 +108,9 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 19       // код версии прошивки
+#define GL_VERSION 20       // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
-#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
+//#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
@@ -120,7 +127,7 @@ const char WiFiPassword[] = "12345678";
 //#define STRIP_PIN 5     // GPIO5 на gl module (D1 на wemos/node)
 
 // ---------- БИБЛИОТЕКИ -----------
-#define FASTLED_ALLOW_INTERRUPTS 0
+//#define FASTLED_ALLOW_INTERRUPTS 0
 #include "data.h"         // данные
 #include "Time.h"         // часы
 #include "TimeRandom.h"   // случайные числа по времени

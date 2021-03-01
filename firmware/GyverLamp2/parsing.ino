@@ -1,6 +1,6 @@
+char buf[UDP_TX_PACKET_MAX_SIZE + 1];
 void parsing() {
   if (Udp.parsePacket()) {
-    static char buf[UDP_TX_PACKET_MAX_SIZE + 1];
     int n = Udp.read(buf, UDP_TX_PACKET_MAX_SIZE);
     buf[n] = NULL;
 
@@ -27,7 +27,7 @@ void parsing() {
 
     // ПАРСИНГ
     byte data[MAX_PRESETS * PRES_SIZE + 10];
-    memset(data, 0, sizeof(data));
+    memset(data, 0, MAX_PRESETS * PRES_SIZE + 10);
     int count = 0;
     char *str, *p = buf;
     char *ssid, *pass;
@@ -53,7 +53,6 @@ void parsing() {
         if (count == 24) strcpy(cfg.mqttPass, str);
       }
     }
-    yield();
 
     // тип 0 - control, 1 - config, 2 - effects, 3 - dawn, 4 - from master, 5 - palette, 6 - time
     switch (data[1]) {
@@ -93,6 +92,7 @@ void parsing() {
           case 13:                                        // выключить через
             if (data[3] == 0) turnoffTmr.stop();
             else {
+              DEBUGLN("Fade");
               fadeDown((uint32_t)data[3] * 60000ul);
             }
             break;

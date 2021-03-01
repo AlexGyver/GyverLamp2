@@ -164,7 +164,7 @@ void checkUpdate() {
       DEBUGLN(GL_VERSION);
     } else {
       blink16(CRGB::Blue);
-      DEBUG("Update to current");
+      DEBUGLN("Update to current");
     }
     cfg.update = 0;
     EE_updCfg();

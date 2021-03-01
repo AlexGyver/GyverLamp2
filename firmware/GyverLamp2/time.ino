@@ -12,7 +12,7 @@ void setupTime() {
 void timeTicker() {
   static timerMillis tmr(30, true);
   if (tmr.isReady()) {
-    if (cfg.WiFimode && WiFi.status() == WL_CONNECTED) {  // если вайфай подключен
+    if (cfg.WiFimode && WiFi.status() == WL_CONNECTED && !connTmr.running()) {  // если вайфай подключен и это не попытка переподключиться
       now.sec = ntp.getSeconds();
       now.min = ntp.getMinutes();
       now.hour = ntp.getHours();

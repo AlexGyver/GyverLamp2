@@ -19,12 +19,15 @@ void effectsRoutine() {
   byte thisScale = getScale();
   byte thisBright = getBright();
 
-  if (cfg.adcMode > 1) {    // музыка или яркость
+  if (musicMode() || briMode()) {    // музыка или яркость
     if (cfg.role) {         // мастер отправляет
-      static timerMillis adcSend(120, true);
-      if (adcSend.isReady() && millis() - udpTmr >= 1000) sendUDP(7, thisLength, thisScale, thisBright);
+      static uint32_t tmr = 0;
+      if ((millis() - tmr >= musicMode() ? 120 : 1000) && millis() - udpTmr >= 1000) {
+        sendUDP(7, thisLength, thisScale, thisBright);
+        tmr = millis();
+      }
     } else {                // слейв получает
-      if (millis() - gotADCtmr < 2000) {     // есть сигнал с мастера
+      if (millis() - gotADCtmr < 4000) {     // есть сигнал с мастера
         thisLength = udpLength;
         thisScale = udpScale;
         thisBright = udpBright;
@@ -46,6 +49,7 @@ void effectsRoutine() {
     prevEff = CUR_PRES.effect;
     loading = true;
   }
+  yield();
 
   // =================================================== ЭФФЕКТЫ ===================================================
   switch (CUR_PRES.effect) {
@@ -217,7 +221,7 @@ void effectsRoutine() {
     case 9: // =================================== ЧАСЫ ===================================
       FastLED.clear();
       drawClock(mapFF(CUR_PRES.scale, 0, cfg.length - 7), (255 - CUR_PRES.speed), CHSV(CUR_PRES.color, 255, 255));
-      break; 
+      break;
 
     case 10: // ================================= ПОГОДА ==================================
 
@@ -236,13 +240,16 @@ void effectsRoutine() {
 bool musicMode() {
   return ((cfg.adcMode == GL_ADC_MIC || cfg.adcMode == GL_ADC_BOTH) && (CUR_PRES.advMode > 1 && CUR_PRES.advMode <= 4));
 }
+bool briMode() {
+  return (cfg.adcMode == GL_ADC_BRI || cfg.adcMode == GL_ADC_BOTH);
+}
 
 byte getBright() {
   int maxBr = cfg.bright;   // макс яркость из конфига
   byte fadeBr = 255;
   if (CUR_PRES.fadeBright) fadeBr = CUR_PRES.bright; // ограничен вручную
 
-  if (cfg.adcMode == GL_ADC_BRI || cfg.adcMode == GL_ADC_BOTH) {    // ----> датчик света или оба
+  if (briMode()) {    // ----> датчик света или оба
     maxBr = constrain(phot.getFil(), cfg.minLight, cfg.maxLight);
     if (cfg.minLight != cfg.maxLight)
       maxBr = map(maxBr, cfg.minLight, cfg.maxLight, cfg.minBright, cfg.maxBright);
