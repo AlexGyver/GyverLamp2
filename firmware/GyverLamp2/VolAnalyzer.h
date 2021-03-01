@@ -123,6 +123,6 @@ class VolAnalyzer {
     int max = 0, count = 0;
     int maxs = 0, mins = 1023;
     int _volMin = 0, _volMax = 100, _trsh = 30;
-    bool _pulse = 0, _first = 0;    
+    bool _pulse = 0, _first = 0;
     FastFilter minF, maxF, volF;
 };

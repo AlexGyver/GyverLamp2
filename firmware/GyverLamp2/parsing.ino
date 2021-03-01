@@ -1,37 +1,41 @@
 void parsing() {
   if (Udp.parsePacket()) {
-    static uint32_t tmr = 0;
     static char buf[UDP_TX_PACKET_MAX_SIZE + 1];
     int n = Udp.read(buf, UDP_TX_PACKET_MAX_SIZE);
-
     buf[n] = NULL;
-    DEBUGLN(buf);   // пакет вида <ключ>,<канал>,<тип>,<дата1>,<дата2>...
-    byte keyLen = strchr(buf, ',') - buf;     // indexof
-    if (strncmp(buf, GL_KEY, keyLen)) return; // не наш ключ
 
-    if (buf[keyLen + 1] == '7') {   // принимаем данные звука и ацп
-      int data[4];
-      mString ints(buf + keyLen + 3, 100);
-      ints.parseInts(data, 4);
-      udpLength = data[0];
-      udpScale = data[1];
-      udpWidth = data[2];
-      udpBright = data[3];
-      return;
+    // ПРЕ-ПАРСИНГ (для данных АЦП)
+    if (buf[0] != 'G' || buf[1] != 'L' || buf[2] != ',') return;  // защита от не наших данных
+    if (buf[3] == '7') {   // АЦП GL,7,
+      if (!cfg.role) {     // принимаем данные ацп если слейв
+        int data[3];
+        mString ints(buf + 5, 20);
+        ints.parseInts(data, 3);
+        udpLength = data[0];
+        udpScale = data[1];
+        udpBright = data[2];
+        effTmr.force();   // форсируем отрисовку эффекта
+        gotADCtmr = millis();
+      }
+      return;   // выходим
     }
 
-    if (millis() - tmr < 500) return;  // принимаем посылки не чаще 2 раз в секунду
-    tmr = millis();
+    if (millis() - udpTmr < 500) return;   // принимаем остальные посылки не чаще 2 раз в секунду
+    udpTmr = millis();
 
+    DEBUGLN(buf);   // пакет вида <GL>,<тип>,<дата1>,<дата2>...
+
+    // ПАРСИНГ
     byte data[MAX_PRESETS * PRES_SIZE + 10];
-    memset(data, 0, MAX_PRESETS * PRES_SIZE + 10);
+    memset(data, 0, sizeof(data));
     int count = 0;
-    char *str, *p = buf + keyLen;  // сдвиг до даты
+    char *str, *p = buf;
     char *ssid, *pass;
 
     while ((str = strtok_r(p, ",", &p)) != NULL) {
       uint32_t thisInt = atoi(str);
-      data[count++] = (byte)thisInt;
+      data[count++] = (byte)thisInt;  // парс байтов
+      // парс "тяжёлых" данных
       if (data[1] == 0) {
         if (count == 4) ssid = str;
         if (count == 5) pass = str;
@@ -49,21 +53,12 @@ void parsing() {
         if (count == 24) strcpy(cfg.mqttPass, str);
       }
     }
+    yield();
 
-    // широковещательный запрос (адрес 0) времени для local устройств в сети AP лампы
-    if (data[0] == 0 && cfg.WiFimode && !gotNTP) {
-      
-      now.day = data[1];
-      now.hour = data[2];
-      now.min = data[3];
-      now.sec = data[4];
-      now.setMs(0);
-    }
-
-    if (data[0] != cfg.group) return;     // не наш адрес, выходим
-
-    switch (data[1]) {  // тип 0 - control, 1 - config, 2 - effects, 3 - dawn, 4 - from master, 5 - palette
+    // тип 0 - control, 1 - config, 2 - effects, 3 - dawn, 4 - from master, 5 - palette, 6 - time
+    switch (data[1]) {
       case 0: DEBUGLN("Control"); blinkTmr.restart();
+        if (!cfg.state && data[2] != 1) return;   // если лампа выключена и это не команда на включение - не обрабатываем
         switch (data[2]) {
           case 0: controlHandler(0); break;               // выкл
           case 1: controlHandler(1); break;               // вкл
@@ -171,6 +166,17 @@ void parsing() {
         updPal();
         EE_updatePal();
         break;
+
+      case 6: DEBUGLN("Time from AP");
+        if (cfg.WiFimode && !gotNTP) {   // время для local устройств в сети AP лампы (не получили время из интернета)
+          now.day = data[2];
+          now.hour = data[3];
+          now.min = data[4];
+          now.sec = 0;
+          now.setMs(0);
+          DEBUGLN("Got time from master");
+        }
+        break;
     }
     FastLED.clear();    // на всякий случай
   }
@@ -178,10 +184,10 @@ void parsing() {
 
 void sendToSlaves(byte data1, byte data2) {
   if (cfg.role == GL_MASTER) {
-    char reply[20];
+    char reply[15];
     mString packet(reply, sizeof(reply));
     packet.clear();
-    packet = packet + GL_KEY + ',' + cfg.group + ",4," + data1 + ',' + data2;
+    packet = packet + "GL,4," + data1 + ',' + data2;
 
     DEBUG("Sending to Slaves: ");
     DEBUGLN(reply);

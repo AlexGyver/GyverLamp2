@@ -1,4 +1,14 @@
 /*
+  Версия 0.19b
+  Минимальная версия приложения 1.17!!!
+  Почищен мусор, оптимизация, повышена стабильность и производительность
+  Мигает теперь 16 светиков
+  Снова переделана сетевая политика, упрощён и сильно ускорен парсинг
+  Изменены пределы по светодиодам, что сильно увеличило производительность
+  Выключенная (программно) лампа не принимает сервисные команды кроме команды включиться
+  Добавлены часы, в том числе в рассвет
+  Slave работает со светомузыкой сам, если не получает данные с мастера
+
   Версия 0.18b
   Уменьшена чувствительность хлопков
   Увеличена плавность светомузыки
@@ -48,9 +58,7 @@
   плавная смена режимов
   Mqtt?
   Базовый пак
-  Предложения Серёги крутского
   Эффект погода https://it4it.club/topic/40-esp8266-i-parsing-pogodyi-s-openweathermap/
-  Эффект часы
 */
 
 // ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
@@ -76,7 +84,7 @@
 
 // ------------ Лента -------------
 #define STRIP_PIN 2         // пин ленты GPIO2 (D4 на wemos/node)
-#define MAX_LEDS 600        // макс. светодиодов
+#define MAX_LEDS 300        // макс. светодиодов
 #define STRIP_CHIP WS2812   // чип ленты
 #define STRIP_COLOR GRB     // порядок цветов в ленте
 #define STRIP_VOLT 5        // напряжение ленты, V
@@ -93,15 +101,15 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 18       // код версии прошивки
+#define GL_VERSION 19       // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
-//#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
+#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
-//#define MAX_LEDS 1200
+//#define MAX_LEDS 900
 
 // esp01
 //#define BTN_PIN 0
@@ -139,33 +147,35 @@ Palette pal;
 WiFiServer server(80);
 WiFiUDP Udp;
 WiFiUDP ntpUDP;
+IPAddress deviceIP;
 NTPClient ntp(ntpUDP);
 CRGB leds[MAX_LEDS];
 Time now;
 Button btn(BTN_PIN);
 timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
+timerMillis effTmr(30, true);
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;
 Clap clap;
 
+uint16_t portNum;
+uint32_t udpTmr = 0, gotADCtmr = 0;
 byte btnClicks = 0, brTicks = 0;
 unsigned char matrixValue[11][16];
 bool gotNTP = false, gotTime = false;
 bool loading = true;
-int udpLength = 0, udpWidth = 0;
+int udpLength = 0;
 byte udpScale = 0, udpBright = 0;
-
 
 // ------------------- SETUP --------------------
 void setup() {
+  misc();
   delay(2000);          // ждём старта есп
-  memset(matrixValue, 0, sizeof(matrixValue));
 #ifdef DEBUG_SERIAL
   Serial.begin(115200);
   DEBUGLN();
 #endif
-  EEPROM.begin(1000);   // старт епром
   startStrip();         // старт ленты
   btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
   EE_startup();         // читаем епром
@@ -183,6 +193,7 @@ void setup() {
 
 void loop() {
   timeTicker();       // обновляем время
+  yield();
 #ifndef SKIP_WIFI
   tryReconnect();     // пробуем переподключиться если WiFi упал
   yield();
@@ -195,4 +206,5 @@ void loop() {
   yield();
   button();           // проверяем кнопку
   checkAnalog();      // чтение звука и датчика
+  yield();
 }

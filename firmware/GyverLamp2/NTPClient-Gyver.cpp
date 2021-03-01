@@ -1,23 +1,23 @@
 /**
- * The MIT License (MIT)
- * Copyright (c) 2015 by Fabrice Weinberg
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+   The MIT License (MIT)
+   Copyright (c) 2015 by Fabrice Weinberg
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*/
 
 #include "NTPClient-Gyver.h"
 
@@ -61,9 +61,9 @@ void NTPClient::begin(int port) {
 }
 
 bool NTPClient::forceUpdate() {
-  #ifdef DEBUG_NTPClient
-    Serial.println("Update from NTP Server");
-  #endif
+#ifdef DEBUG_NTPClient
+  Serial.println("Update from NTP Server");
+#endif
 
   this->sendNTPPacket();
 
@@ -83,12 +83,12 @@ bool NTPClient::forceUpdate() {
 
   unsigned long highWord = word(this->_packetBuffer[40], this->_packetBuffer[41]);
   unsigned long lowWord = word(this->_packetBuffer[42], this->_packetBuffer[43]);
-  
+
   /// добавлено AlexGyver
   uint32_t frac  = (uint32_t) _packetBuffer[44] << 24
-               | (uint32_t) _packetBuffer[45] << 16
-               | (uint32_t) _packetBuffer[46] <<  8
-               | (uint32_t) _packetBuffer[47] <<  0;
+                   | (uint32_t) _packetBuffer[45] << 16
+                   | (uint32_t) _packetBuffer[46] <<  8
+                   | (uint32_t) _packetBuffer[47] <<  0;
   uint16_t mssec = ((uint64_t) frac * 1000) >> 32;
   //https://arduino.stackexchange.com/questions/49567/synching-local-clock-usign-ntp-to-milliseconds
   _lastUpdate -= mssec;
@@ -105,7 +105,7 @@ bool NTPClient::forceUpdate() {
 
 bool NTPClient::update() {
   if ((millis() - this->_lastUpdate >= this->_updateInterval)     // Update after _updateInterval
-    || this->_lastUpdate == 0) {                                // Update if there was no update yet.
+      || this->_lastUpdate == 0) {                                // Update if there was no update yet.
     if (!this->_udpSetup) this->begin();                         // setup the UDP client if needed
     return this->forceUpdate();
   }
@@ -166,7 +166,7 @@ void NTPClient::setUpdateInterval(unsigned long updateInterval) {
 }
 
 void NTPClient::setPoolServerName(const char* poolServerName) {
-    this->_poolServerName = poolServerName;
+  this->_poolServerName = poolServerName;
 }
 
 void NTPClient::sendNTPPacket() {

@@ -5,6 +5,8 @@ bool EEpalFlag = false;
 
 void EE_startup() {
   // старт епром
+  EEPROM.begin(1000);   // старт епром
+  delay(100);
   if (EEPROM.read(0) != EE_KEY) {
     EEPROM.write(0, EE_KEY);
     EEPROM.put(1, cfg);
@@ -12,7 +14,7 @@ void EE_startup() {
     EEPROM.put(sizeof(cfg) + sizeof(dawn) + 1, pal);
     EEPROM.put(sizeof(cfg) + sizeof(dawn) + sizeof(pal) + 1, preset);
     EEPROM.commit();
-    blink8(CRGB::Magenta);
+    blink16(CRGB::Magenta);
     DEBUGLN("First start");
   }
   EEPROM.get(1, cfg);

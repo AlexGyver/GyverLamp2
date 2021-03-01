@@ -3,6 +3,10 @@ void setupADC() {
   clap.setTimeout(500);
   clap.setTrsh(250);
 
+  vol.setDt(700);
+  vol.setPeriod(5);
+  vol.setWindow(map(MAX_LEDS, 300, 1200, 20, 1));
+
   low.setDt(0);
   low.setPeriod(0);
   low.setWindow(0);
@@ -35,7 +39,7 @@ void setupADC() {
 
 
 void checkAnalog() {
-  if (cfg.role) {
+  if (cfg.role || millis() - gotADCtmr >= 2000) {   // только мастер или слейв по таймауту опрашивает АЦП!
     switch (cfg.adcMode) {
       case GL_ADC_NONE: break;
       case GL_ADC_BRI: checkPhot(); break;
@@ -63,10 +67,11 @@ void checkMusic() {
   clap.tick(vol.getRawMax());
   if (clap.hasClaps(2)) controlHandler(!cfg.state);
 #endif
-
+  yield();
   if (CUR_PRES.advMode == GL_ADV_LOW || CUR_PRES.advMode == GL_ADV_HIGH) {   // частоты
     int raw[FFT_SIZE], spectr[FFT_SIZE];
     for (int i = 0; i < FFT_SIZE; i++) raw[i] = analogRead(A0);
+    yield();
     FFT(raw, spectr);
     int low_raw = 0;
     int high_raw = 0;

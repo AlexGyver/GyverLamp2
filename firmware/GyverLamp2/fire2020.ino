@@ -12,7 +12,7 @@ void fire2020(byte scale, int len) {
   static float trackingObjectPosX[100];
   static float trackingObjectPosY[100];
   static uint16_t ff_x, ff_y, ff_z;
-  
+
 
   if (loading) {
     loading = false;

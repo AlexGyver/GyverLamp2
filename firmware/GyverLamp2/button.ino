@@ -33,11 +33,11 @@ void button() {
         break;
       case 5:
         cfg.role = 0;
-        blink8(CRGB::DarkSlateBlue);
+        blink16(CRGB::DarkSlateBlue);
         break;
       case 6:
         cfg.role = 1;
-        blink8(CRGB::Maroon);
+        blink16(CRGB::Maroon);
         break;
     }
     EE_updateCfg();

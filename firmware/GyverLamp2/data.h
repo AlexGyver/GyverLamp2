@@ -41,12 +41,12 @@ int mapFF(byte x, byte min, byte max) {
 const char OTAhost[] = "http://ota.alexgyver.ru/";
 const char *OTAfile[] = {
   "GL2_latest.bin",
-  "com_600.bin",
-  "com_1200.bin",
-  "esp1_600.bin",
-  "esp1_1200.bin",
-  "module_600.bin",
-  "module_1200.bin",
+  "com_300.bin",
+  "com_900.bin",
+  "esp1_300.bin",
+  "esp1_900.bin",
+  "module_300.bin",
+  "module_900.bin",
 };
 
 const char NTPserver[] = "pool.ntp.org";
@@ -129,3 +129,9 @@ struct Dawn {
   byte bright = 100;      // (0.. 255)
   byte time = 1;          // (5,10,15,20..)
 };
+
+/*
+  - Каждые 5 минут лампа AP отправляет время (день час минута) на Local лампы всех ролей в сети с ней (GL,6,день,час,мин)
+  - Если включен АЦП, Мастер отправляет своей группе данные с него на каждой итерации отрисовки эффектов (GL,1,длина,масштаб,яркость)
+  - Установка времени с мобилы - получают все роли АР и Local (не получившие ntp)
+*/

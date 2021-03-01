@@ -15,12 +15,12 @@ void presetRotation(bool force) {
 
 void changePreset(int dir) {
   //if (!cfg.rotation) {    // ручная смена
-    cfg.curPreset += dir;
-    if (cfg.curPreset >= cfg.presetAmount) cfg.curPreset = 0;
-    if (cfg.curPreset < 0) cfg.curPreset = cfg.presetAmount - 1;
-    holdPresTmr.restart();
-    DEBUG("Preset changed to ");
-    DEBUGLN(cfg.curPreset);
+  cfg.curPreset += dir;
+  if (cfg.curPreset >= cfg.presetAmount) cfg.curPreset = 0;
+  if (cfg.curPreset < 0) cfg.curPreset = cfg.presetAmount - 1;
+  holdPresTmr.restart();
+  DEBUG("Preset changed to ");
+  DEBUGLN(cfg.curPreset);
   //}
 }
 
@@ -61,13 +61,14 @@ void fade(bool state) {
 }
 
 void setPower(bool state) {
+  if (cfg.state != state) EE_updateCfg();   // на сохранение
   cfg.state = state;
   if (!state) {
     delay(100);     // чтобы пролететь мин. частоту обновления
     FastLED.clear();
     FastLED.show();
   }
-  sendToSlaves(0, cfg.state);
+  if (millis() - udpTmr >= 1000) sendToSlaves(0, cfg.state); // пиздец костыль
   DEBUGLN(state ? "Power on" : "Power off");
 }
 

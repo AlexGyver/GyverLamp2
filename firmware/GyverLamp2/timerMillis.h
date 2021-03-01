@@ -21,6 +21,9 @@ class timerMillis {
       if (_active && millis() - _tmr >= _interval) stop();
       return _active;
     }
+    void force() {
+      _tmr = millis() - _interval;
+    }
     void reset() {
       _tmr = millis();
     }
