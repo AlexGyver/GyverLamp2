@@ -1,4 +1,10 @@
 /*
+  Версия 0.21b
+  Выбор палитры для частиц и конфетти
+  Счётчик количества ламп онлайн в приложении
+  Синхронизация текущего эффекта с приложением
+  Добавлен эффект смерч
+
   Версия 0.20b
   Оптимизация
   Исправление критических ошибок
@@ -75,6 +81,7 @@
 // При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
 // ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
 // FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
+#define GL_BUILD 0  // 0: com 300, 1: com 900, 2: esp1 300, 3: esp1 900, 4: module 300, 5: module 900
 
 // ---------- Настройки -----------
 #define GL_KEY "GL"         // ключ сети
@@ -108,7 +115,7 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 20       // код версии прошивки
+#define GL_VERSION 21       // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
 #define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
@@ -116,22 +123,33 @@ const char WiFiPassword[] = "12345678";
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
-//#define MAX_LEDS 900
-
-// esp01
-//#define BTN_PIN 0
-//#define STRIP_PIN 2
-//#define USE_ADC 0
-
-// GL2 module
-//#define STRIP_PIN 5     // GPIO5 на gl module (D1 на wemos/node)
+#if (GL_BUILD == 0)
+#elif (GL_BUILD == 1)
+#define MAX_LEDS 900
+#elif (GL_BUILD == 2)
+#define MAX_LEDS 300
+#define BTN_PIN 0
+#define STRIP_PIN 2
+#define USE_ADC 0
+#elif (GL_BUILD == 3)
+#define MAX_LEDS 900
+#define BTN_PIN 0
+#define STRIP_PIN 2
+#define USE_ADC 0
+#elif (GL_BUILD == 4)
+#define MAX_LEDS 300
+#define STRIP_PIN 5
+#elif (GL_BUILD == 5)
+#define MAX_LEDS 900
+#define STRIP_PIN 5
+#endif
 
 // ---------- БИБЛИОТЕКИ -----------
 //#define FASTLED_ALLOW_INTERRUPTS 0
 #include "data.h"         // данные
 #include "Time.h"         // часы
 #include "TimeRandom.h"   // случайные числа по времени
-#include "FastRandom.h"   // быстрый рандом
+//#include "FastRandom.h"   // быстрый рандом
 #include "Button.h"       // библа кнопки
 #include "palettes.h"     // палитры
 #include "NTPClient-Gyver.h"  // сервер времени (модиф)
@@ -154,13 +172,13 @@ Palette pal;
 WiFiServer server(80);
 WiFiUDP Udp;
 WiFiUDP ntpUDP;
-IPAddress deviceIP;
+IPAddress broadIP;
 NTPClient ntp(ntpUDP);
 CRGB leds[MAX_LEDS];
 Time now;
 Button btn(BTN_PIN);
 timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
-timerMillis effTmr(30, true);
+timerMillis effTmr(30, true), onlineTmr(500, true);
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;
@@ -214,4 +232,5 @@ void loop() {
   button();           // проверяем кнопку
   checkAnalog();      // чтение звука и датчика
   yield();
+  iAmOnline();
 }

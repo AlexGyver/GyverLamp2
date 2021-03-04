@@ -9,7 +9,7 @@ void parsing() {
     if (buf[3] == '7') {   // АЦП GL,7,
       if (!cfg.role) {     // принимаем данные ацп если слейв
         int data[3];
-        mString ints(buf + 5, 20);
+        mString ints(buf + 5);
         ints.parseInts(data, 3);
         udpLength = data[0];
         udpScale = data[1];
@@ -80,7 +80,7 @@ void parsing() {
               FastLED.clear();
               FastLED.show();
               char OTA[60];
-              mString ota(OTA, 60);
+              mString ota(OTA);
               ota.clear();
               ota += OTAhost;
               ota += OTAfile[data[3]];
@@ -185,16 +185,16 @@ void parsing() {
 void sendToSlaves(byte data1, byte data2) {
   if (cfg.role == GL_MASTER) {
     char reply[15];
-    mString packet(reply, sizeof(reply));
+    mString packet(reply);
     packet.clear();
     packet = packet + "GL,4," + data1 + ',' + data2;
 
     DEBUG("Sending to Slaves: ");
     DEBUGLN(reply);
 
-    FOR_i(0, 3) {
+    FOR_i(0, 4) {
       sendUDP(reply);
-      delay(10);
+      delay(8);
     }
   }
 }
