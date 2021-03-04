@@ -233,12 +233,13 @@ void effectsRoutine() {
       FastLED.clear();
       FOR_k(0, (thisScale >> 5) + 1) {
         FOR_i(0, cfg.length) {
-          byte thisPos = inoise8(i * 10 - (now.weekMs >> 1) * CUR_PRES.speed / 255, k * 10000);
+          //byte thisPos = inoise8(i * 10 - (now.weekMs >> 1) * CUR_PRES.speed / 255, k * 10000);
+          byte thisPos = inoise8(i * 10 + k * 10000, (now.weekMs >> 1) * CUR_PRES.speed / 255);
           thisPos = map(thisPos, 50, 200, 0, cfg.width);
           byte scale = 3;
           FOR_j(0, scale) {
             CRGB color = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(j * 255 / scale), 255, LINEARBLEND);
-            color.fadeToBlackBy(j * 180 / scale);
+            color.fadeToBlackBy(j * 255 / scale);
             if (j == 0) {
               setPixOverlap(thisPos, i, color);
             } else {
