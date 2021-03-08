@@ -68,7 +68,7 @@ void drawDots(int X, int Y, CRGB color) {
 }
 
 void drawClock(byte Y, byte speed, CRGB color) {
-  if (cfg.deviceType == 1 || cfg.width < 16) return;   // лента или мелкая матрица - на выход
+  if (cfg.deviceType == 1) return;   // лента - на выход
   byte h1, h2, m1, m2;
   if (gotNTP || gotTime) {
     h1 = now.hour / 10;

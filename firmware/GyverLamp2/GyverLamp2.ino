@@ -1,4 +1,10 @@
 /*
+  Версия 0.22b
+  Чуть переделан смерч
+  Исправлены глюки когда есть вайфай но нет интернета
+  Добавлено свечение после завершения рассвета, время настраивается
+  Обновлены бинарники, прошлая версия могла быть с ошибкой
+
   Версия 0.21b
   Выбор палитры для частиц и конфетти
   Счётчик количества ламп онлайн в приложении
@@ -115,10 +121,10 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 21       // код версии прошивки
+#define GL_VERSION 22       // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 //#define DEBUG_SERIAL        // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
+#define EE_KEY 56           // ключ сброса eeprom
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
@@ -178,7 +184,7 @@ CRGB leds[MAX_LEDS];
 Time now;
 Button btn(BTN_PIN);
 timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
-timerMillis effTmr(30, true), onlineTmr(500, true);
+timerMillis effTmr(30, true), onlineTmr(500, true), postDawn(10 * 60000ul);
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;

@@ -42,8 +42,9 @@ void controlHandler(bool state) {
     DEBUGLN("stop off timer");
     return;
   }
-  if (dawnTmr.running()) {
+  if (dawnTmr.running() || postDawn.running()) {
     dawnTmr.stop();
+    postDawn.stop();
     delay(50);
     FastLED.clear();
     FastLED.show();

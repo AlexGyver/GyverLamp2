@@ -38,7 +38,7 @@ class timerMillis {
       return _active;
     }
     byte getLength8() {
-      return (_active) ? ((millis() - _tmr) * 255ul / _interval) : 0;
+      return (_active) ? ((min(uint32_t(millis() - _tmr), _interval)) * 255ul / _interval) : 0;
     }
 
   private:

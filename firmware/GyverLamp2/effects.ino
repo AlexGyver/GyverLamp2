@@ -2,12 +2,19 @@ void effectsRoutine() {
   static byte prevEff = 255;
   if (!effTmr.isReady()) return;
 
-  if (dawnTmr.running()) {
-    fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, dawnTmr.getLength8(), scaleFF(dawnTmr.getLength8(), dawn.bright), LINEARBLEND));
+  if (dawnTmr.running() || postDawn.running()) {
+    byte thisColor = dawnTmr.getLength8();
+    if (postDawn.running()) thisColor = 255;
+    fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, thisColor, scaleFF(thisColor, dawn.bright), LINEARBLEND));
     drawClock(cfg.length / 2 - 4, 100, 0);
     FastLED.show();
     if (dawnTmr.isReady()) {
       dawnTmr.stop();
+      postDawn.setInterval(dawn.post * 60000ul);
+      postDawn.restart();
+    }
+    if (postDawn.isReady()) {
+      postDawn.stop();
       FastLED.clear();
       FastLED.show();
     }
@@ -234,12 +241,11 @@ void effectsRoutine() {
       FOR_k(0, (thisScale >> 5) + 1) {
         FOR_i(0, cfg.length) {
           //byte thisPos = inoise8(i * 10 - (now.weekMs >> 1) * CUR_PRES.speed / 255, k * 10000);
-          byte thisPos = inoise8(i * 10 + k * 10000, (now.weekMs >> 1) * CUR_PRES.speed / 255);
+          byte thisPos = inoise8(i * 10 + (now.weekMs >> 3) * CUR_PRES.speed / 255 + k * 10000, (now.weekMs >> 1) * CUR_PRES.speed / 255);
           thisPos = map(thisPos, 50, 200, 0, cfg.width);
-          byte scale = 3;
+          byte scale = 4;
           FOR_j(0, scale) {
-            CRGB color = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(j * 255 / scale), 255, LINEARBLEND);
-            color.fadeToBlackBy(j * 255 / scale);
+            CRGB color = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(j * 255 / scale), (255 - j * 255 / (scale - 1)), LINEARBLEND);
             if (j == 0) {
               setPixOverlap(thisPos, i, color);
             } else {

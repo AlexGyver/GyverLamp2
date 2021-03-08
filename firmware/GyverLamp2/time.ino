@@ -1,6 +1,6 @@
 void setupTime() {
-  ntp.setUpdateInterval(NTP_UPD_PRD * 60000ul);
-  ntp.setTimeOffset((cfg.GMT - 13) * 3600);
+  ntp.setUpdateInterval(NTP_UPD_PRD * 60000ul / 2); // ставим меньше, так как апдейт вручную
+  ntp.setTimeOffset((cfg.GMT - 13) * 3600l);
   ntp.setPoolServerName(NTPserver);
   if (cfg.WiFimode && !connTmr.running()) {     // если успешно подключились к WiFi
     ntp.begin();
@@ -18,8 +18,8 @@ void timeTicker() {
       now.hour = ntp.getHours();
       now.day = ntp.getDay();   // вс 0, сб 6
       now.weekMs = now.getWeekS() * 1000ul + ntp.getMillis();
-      now.setMs(ntp.getMillis());
-      if (ntp.update()) gotNTP = true;
+      now.setMs(ntp.getMillis());      
+      if (now.sec == 0 && now.min % NTP_UPD_PRD == 0 && ntp.update()) gotNTP = true;      
     } else {          // если вайфай не подключен
       now.tick();     // тикаем своим счётчиком
     }
@@ -75,6 +75,7 @@ void checkWorkTime() {
   byte curState = isWorkTime(now.hour, cfg.workFrom, cfg.workTo);
   if (prevState != curState) {    // переключение расписания
     prevState = curState;
+    // todo: проверить пересечение с рассветом
     if (curState && !cfg.state && !cfg.manualOff) fade(1);  // нужно включить, а лампа выключена и не выключалась вручную
     if (!curState && cfg.state) fade(0);                    // нужно выключить, а лампа включена
   }
