@@ -1,7 +1,0 @@
-PIO project
-
-pio update
-pio run --target erase
-pio run --target upload
-
-

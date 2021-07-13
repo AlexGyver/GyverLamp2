@@ -19,7 +19,7 @@
 #define MAX_PRESETS 40      // макс количество режимов
 
 // ------------------- МАКРО --------------------
-#ifdef DEBUG_SERIAL
+#ifdef DEBUG_SERIAL_LAMP
 #define DEBUGLN(x) Serial.println(x)
 #define DEBUG(x) Serial.print(x)
 #else
