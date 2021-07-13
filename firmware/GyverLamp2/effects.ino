@@ -3,6 +3,7 @@ void effectsRoutine() {
   if (!effTmr.isReady()) return;
 
   if (dawnTmr.running() || postDawn.running()) {
+    FastLED.setBrightness(255);
     byte thisColor = dawnTmr.getLength8();
     if (postDawn.running()) thisColor = 255;
     fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, thisColor, scaleFF(thisColor, dawn.bright), LINEARBLEND));
