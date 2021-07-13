@@ -1,19 +1,20 @@
 /*
- ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
- ДЛЯ КОМПИЛЯЦИИ ПРОШИВКИ ПОД NODEMCU/WEMOS/ESP01/ESP12 ВЫБИРАТЬ
- Инструменты / Плата Generic ESP8266
- Инструменты / Flash Size 4MB (FS:2MB OTA)
- CPU Frequency / 160 MHz (рекомендуется для стабильности светомузыки!!!)
- При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
- ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
- FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
+  ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
+  ДЛЯ КОМПИЛЯЦИИ ПРОШИВКИ ПОД NODEMCU/WEMOS/ESP01/ESP12 ВЫБИРАТЬ
+  Инструменты / Плата Generic ESP8266
+  Инструменты / Flash Size 4MB (FS:2MB OTA)
+  CPU Frequency / 160 MHz (рекомендуется для стабильности светомузыки!!!)
+  При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
+  ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
+  FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
 */
 
 /*
   Версия 0.23b
   Поправлена яркость рассвета
+  Компилится на версии ядра esp v3
 
-  TODO:  
+  TODO:
   Upload -> Применить
   Длина огня в светомуз?
   Плавная смена режимов
