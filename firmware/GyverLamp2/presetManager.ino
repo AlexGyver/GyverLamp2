@@ -42,8 +42,9 @@ void controlHandler(bool state) {
     DEBUGLN("stop off timer");
     return;
   }
-  if (dawnTmr.running()) {
+  if (dawnTmr.running() || postDawn.running()) {
     dawnTmr.stop();
+    postDawn.stop();
     delay(50);
     FastLED.clear();
     FastLED.show();
@@ -68,7 +69,7 @@ void setPower(bool state) {
     FastLED.clear();
     FastLED.show();
   }
-  if (millis() - udpTmr >= 1000) sendToSlaves(0, cfg.state); // пиздец костыль
+  if (millis() - udpTmr >= 1000) sendToSlaves(0, cfg.state); // пиздец костыль (не отправлять слейвам если команда получена по воздуху)
   DEBUGLN(state ? "Power on" : "Power off");
 }
 

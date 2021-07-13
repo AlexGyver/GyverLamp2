@@ -1,6 +1,6 @@
+char buf[UDP_TX_PACKET_MAX_SIZE + 1];
 void parsing() {
   if (Udp.parsePacket()) {
-    static char buf[UDP_TX_PACKET_MAX_SIZE + 1];
     int n = Udp.read(buf, UDP_TX_PACKET_MAX_SIZE);
     buf[n] = NULL;
 
@@ -9,7 +9,7 @@ void parsing() {
     if (buf[3] == '7') {   // АЦП GL,7,
       if (!cfg.role) {     // принимаем данные ацп если слейв
         int data[3];
-        mString ints(buf + 5, 20);
+        mString ints(buf + 5);
         ints.parseInts(data, 3);
         udpLength = data[0];
         udpScale = data[1];
@@ -27,7 +27,7 @@ void parsing() {
 
     // ПАРСИНГ
     byte data[MAX_PRESETS * PRES_SIZE + 10];
-    memset(data, 0, sizeof(data));
+    memset(data, 0, MAX_PRESETS * PRES_SIZE + 10);
     int count = 0;
     char *str, *p = buf;
     char *ssid, *pass;
@@ -53,7 +53,6 @@ void parsing() {
         if (count == 24) strcpy(cfg.mqttPass, str);
       }
     }
-    yield();
 
     // тип 0 - control, 1 - config, 2 - effects, 3 - dawn, 4 - from master, 5 - palette, 6 - time
     switch (data[1]) {
@@ -81,7 +80,7 @@ void parsing() {
               FastLED.clear();
               FastLED.show();
               char OTA[60];
-              mString ota(OTA, 60);
+              mString ota(OTA);
               ota.clear();
               ota += OTAhost;
               ota += OTAfile[data[3]];
@@ -93,6 +92,7 @@ void parsing() {
           case 13:                                        // выключить через
             if (data[3] == 0) turnoffTmr.stop();
             else {
+              DEBUGLN("Fade");
               fadeDown((uint32_t)data[3] * 60000ul);
             }
             break;
@@ -185,16 +185,16 @@ void parsing() {
 void sendToSlaves(byte data1, byte data2) {
   if (cfg.role == GL_MASTER) {
     char reply[15];
-    mString packet(reply, sizeof(reply));
+    mString packet(reply);
     packet.clear();
     packet = packet + "GL,4," + data1 + ',' + data2;
 
     DEBUG("Sending to Slaves: ");
     DEBUGLN(reply);
 
-    FOR_i(0, 3) {
+    FOR_i(0, 4) {
       sendUDP(reply);
-      delay(10);
+      delay(8);
     }
   }
 }

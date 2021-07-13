@@ -26,6 +26,11 @@ void EE_startup() {
   DEBUGLN(sizeof(cfg) + sizeof(dawn) + sizeof(pal) + sizeof(preset) + 1);
 
   // запускаем всё
+  if (cfg.deviceType == GL_TYPE_STRIP) {
+    if (cfg.length > MAX_LEDS) cfg.length = MAX_LEDS;
+    cfg.width = 1;
+  }
+  if (cfg.length * cfg.width > MAX_LEDS) cfg.width = MAX_LEDS / cfg.length;
   FastLED.setMaxPowerInVoltsAndMilliamps(STRIP_VOLT, cfg.maxCur * 100);
   updPal();
 }

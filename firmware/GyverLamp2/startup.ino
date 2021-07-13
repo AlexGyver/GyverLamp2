@@ -156,7 +156,7 @@ void setupLocal() {
 }
 
 void checkUpdate() {
-  if (cfg.update) {
+  if (cfg.update) {   // было ОТА обновление
     if (cfg.version != GL_VERSION) {
       cfg.version = GL_VERSION;
       blink16(CRGB::Cyan);
@@ -164,10 +164,17 @@ void checkUpdate() {
       DEBUGLN(GL_VERSION);
     } else {
       blink16(CRGB::Blue);
-      DEBUG("Update to current");
+      DEBUGLN("Update to current");
     }
     cfg.update = 0;
     EE_updCfg();
+  } else {
+    if (cfg.version != GL_VERSION) {
+      cfg.version = GL_VERSION;
+      blink16(CRGB::Cyan);
+      DEBUG("Update to");
+      DEBUGLN(GL_VERSION);
+    }
   }
 }
 

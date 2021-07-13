@@ -1,22 +1,30 @@
 void sendUDP(char *data) {
-  Udp.beginPacket(deviceIP, portNum + cfg.group);
+  Udp.beginPacket(broadIP, portNum + cfg.group);
   Udp.write(data);
   Udp.endPacket();
 }
 void sendUDP(byte cmd, int data1 = 0, int data2 = 0, int data3 = 0) {
   char reply[20] = "";
-  mString packet(reply, sizeof(reply));
+  mString packet(reply);
   packet = packet + "GL," + cmd + ',' + data1 + ',' + data2 + ',' + data3;
   sendUDP(reply);
   //DEBUG("Sending: ");
   //DEBUGLN(cmd);
 }
+void iAmOnline() {
+  if (onlineTmr.isReady()) {
+    char reply[10] = "GL_ONL";
+    mString packet(reply);
+    packet += cfg.curPreset;
+    sendUDP(reply);
+  }
+}
 
 void restartUDP() {
   Udp.stop();
   Udp.begin(portNum + cfg.group);
-  deviceIP = WiFi.localIP();
-  deviceIP[3] = 255;
+  broadIP = WiFi.localIP();
+  broadIP[3] = 255;
   DEBUG("UDP port: ");
   DEBUGLN(portNum + cfg.group);
 }
@@ -60,7 +68,7 @@ void drawDots(int X, int Y, CRGB color) {
 }
 
 void drawClock(byte Y, byte speed, CRGB color) {
-  if (cfg.deviceType == 1 || cfg.width < 16) return;   // лента или мелкая матрица - на выход
+  if (cfg.deviceType == 1) return;   // лента - на выход
   byte h1, h2, m1, m2;
   if (gotNTP || gotTime) {
     h1 = now.hour / 10;
@@ -70,8 +78,10 @@ void drawClock(byte Y, byte speed, CRGB color) {
     m2 = now.min % 10;
   } else {
     h1 = h2 = m1 = m2 = 10;
-  }
-  int pos = cfg.width - (now.weekMs / (speed * 2)) % (cfg.width + 26);
+  }  
+  int pos;
+  if (speed == 0) pos = cfg.width / 2 - 13;
+  else pos = cfg.width - (now.weekMs / (speed * 2)) % (cfg.width + 26);
   drawDigit(h1, pos, Y, color);
   drawDigit(h2, pos + 6, Y, color);
   if (now.getMs() < 500) drawDots(pos + 12, Y, color);

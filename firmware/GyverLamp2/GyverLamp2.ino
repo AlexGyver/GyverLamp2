@@ -1,73 +1,27 @@
 /*
-  Версия 0.19b
-  Минимальная версия приложения 1.17!!!
-  Почищен мусор, оптимизация, повышена стабильность и производительность
-  Мигает теперь 16 светиков
-  Снова переделана сетевая политика, упрощён и сильно ускорен парсинг
-  Изменены пределы по светодиодам, что сильно увеличило производительность
-  Выключенная (программно) лампа не принимает сервисные команды кроме команды включиться
-  Добавлены часы, в том числе в рассвет
-  Slave работает со светомузыкой сам, если не получает данные с мастера
-
-  Версия 0.18b
-  Уменьшена чувствительность хлопков
-  Увеличена плавность светомузыки
-  Переделана сетевая политика
-  Микрофон и датчик света опрашивает только мастер и отсылает данные слейвам своей группы
-  4 клика - включить первый режим
-  Отправка точного времени на лампу в режиме АР для работы рассвета и синхронизации эффектов
-
-  Версия 0.17b
-  Автосмена отключается 30 сек во время настройки режимов
-  Убрана кнопка upload в режимах
-  Лампа чуть мигает при получении данных
-  Кастом палитра работает на огне 2020
-  Вкл выкл двумя хлопками
-  Плавное выключение
-  Починил рассвет
-
-  Версия 0.16b
-  Исправлен масштаб огня 2020
-  Фикс невыключения рассвета
-
-  Версия 0.14b
-  Мелкие баги
-  Вернул искры огню
-  Добавлены палитры
-  Добавлен огонь 2020
-
-  Версия 0.13b
-  Улучшена стабильность
-
-  Версия 0.12b
-  Мелкие исправления
-
-  Версия 0.11b
-  Добавлен редактор палитр
-  Исправлены мелкие баги в эффектах
-  Переподключение к роутеру после сброса сети
-  Настройка ориентации матрицы из приложения
-  Переработан эффект "Частицы"
-  Добавлена скорость огня
-  Переключение на новый/выбранный режим при редактировании
-  Отправка времени из сервиса (для АР)
-  Выключение по таймеру теперь плавное
-  Добавлен рассвет
-
-  TODO:
-  плавная смена режимов
-  Mqtt?
-  Базовый пак
-  Эффект погода https://it4it.club/topic/40-esp8266-i-parsing-pogodyi-s-openweathermap/
+ ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
+ ДЛЯ КОМПИЛЯЦИИ ПРОШИВКИ ПОД NODEMCU/WEMOS/ESP01/ESP12 ВЫБИРАТЬ
+ Инструменты / Плата Generic ESP8266
+ Инструменты / Flash Size 4MB (FS:2MB OTA)
+ CPU Frequency / 160 MHz (рекомендуется для стабильности светомузыки!!!)
+ При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
+ ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
+ FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
 */
 
-// ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!
-// ДЛЯ КОМПИЛЯЦИИ ПРОШИВКИ ПОД NODEMCU/WEMOS/ESP01/ESP12 ВЫБИРАТЬ
-// Инструменты/Плата Generic ESP8266
-// Инструменты/Flash Size 4MB (FS:2MB OTA)
-// При прошивке с других прошивок лампы поставить: Инструменты/Erase Flash/All Flash Contents
-// ESP core 2.7.4+ http://arduino.esp8266.com/stable/package_esp8266com_index.json
-// FastLED 3.4.0+ https://github.com/FastLED/FastLED/releases
+/*
+  Версия 0.23b
+  Поправлена яркость рассвета
+
+  TODO:  
+  Upload -> Применить
+  Длина огня в светомуз?
+  Плавная смена режимов
+  Mqtt
+  Базовый пак
+  Поддержка куба
+  Погода https://it4it.club/topic/40-esp8266-i-parsing-pogodyi-s-openweathermap/
+*/
 
 // ---------- Настройки -----------
 #define GL_KEY "GL"         // ключ сети
@@ -83,7 +37,7 @@
 #define PHOT_VCC 14         // питание фоторезистора GPIO14 (D5 на wemos/node)
 
 // ------------ Лента -------------
-#define STRIP_PIN 2         // пин ленты GPIO2 (D4 на wemos/node)
+#define STRIP_PIN 2         // пин ленты GPIO2 (D4 на wemos/node), GPIO5 (D1) для module
 #define MAX_LEDS 300        // макс. светодиодов
 #define STRIP_CHIP WS2812   // чип ленты
 #define STRIP_COLOR GRB     // порядок цветов в ленте
@@ -101,30 +55,43 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 19       // код версии прошивки
+#define GL_VERSION 23       // код версии прошивки
 #define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
 #define DEBUG_SERIAL_LAMP   // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 55           // ключ сброса WiFi (измени для сброса всех настроек)
+#define EE_KEY 56           // ключ сброса eeprom
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
-//#define MAX_LEDS 900
+#define GL_BUILD 0  // 0: com 300, 1: com 900, 2: esp1 300, 3: esp1 900, 4: module 300, 5: module 900
 
-// esp01
-//#define BTN_PIN 0
-//#define STRIP_PIN 2
-//#define USE_ADC 0
-
-// GL2 module
-//#define STRIP_PIN 5     // GPIO5 на gl module (D1 на wemos/node)
+#if (GL_BUILD == 0)
+#elif (GL_BUILD == 1)
+#define MAX_LEDS 900
+#elif (GL_BUILD == 2)
+#define MAX_LEDS 300
+#define BTN_PIN 0
+#define STRIP_PIN 2
+#define USE_ADC 0
+#elif (GL_BUILD == 3)
+#define MAX_LEDS 900
+#define BTN_PIN 0
+#define STRIP_PIN 2
+#define USE_ADC 0
+#elif (GL_BUILD == 4)
+#define MAX_LEDS 300
+#define STRIP_PIN 5
+#elif (GL_BUILD == 5)
+#define MAX_LEDS 900
+#define STRIP_PIN 5
+#endif
 
 // ---------- БИБЛИОТЕКИ -----------
-#define FASTLED_ALLOW_INTERRUPTS 0
+//#define FASTLED_ALLOW_INTERRUPTS 0
 #include "data.h"         // данные
 #include "Time.h"         // часы
 #include "TimeRandom.h"   // случайные числа по времени
-#include "FastRandom.h"   // быстрый рандом
+//#include "FastRandom.h"   // быстрый рандом
 #include "Button.h"       // библа кнопки
 #include "palettes.h"     // палитры
 #include "NTPClient-Gyver.h"  // сервер времени (модиф)
@@ -147,13 +114,13 @@ Palette pal;
 WiFiServer server(80);
 WiFiUDP Udp;
 WiFiUDP ntpUDP;
-IPAddress deviceIP;
+IPAddress broadIP;
 NTPClient ntp(ntpUDP);
 CRGB leds[MAX_LEDS];
 Time now;
 Button btn(BTN_PIN);
 timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
-timerMillis effTmr(30, true);
+timerMillis effTmr(30, true), onlineTmr(500, true), postDawn(10 * 60000ul);
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;
@@ -207,4 +174,5 @@ void loop() {
   button();           // проверяем кнопку
   checkAnalog();      // чтение звука и датчика
   yield();
+  iAmOnline();
 }

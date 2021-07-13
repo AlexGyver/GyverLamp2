@@ -1,5 +1,7 @@
-// TODO
-// защита от переполнения
+#ifndef mString_h
+#define mString_h
+
+#include <Arduino.h>
 
 char* mUtoa(uint32_t value, char *buffer, bool clear = 1);
 char* mLtoa(int32_t value, char *buffer, bool clear = 1);
@@ -53,7 +55,7 @@ class mString {
     }
 
     // constructor
-    mString(char* buffer, int newSize) {
+    mString(char* buffer, int newSize = -1) {
       buf = buffer;
       size = newSize;
     }
@@ -101,7 +103,7 @@ class mString {
     // add
     mString& add(const char c) {
       byte len = length();
-      if (len + 1 >= size) return *this;
+      if (size != -1 && len + 1 >= size) return *this;
       buf[len++] = c;
       buf[len++] = NULL;
       return *this;
@@ -111,13 +113,13 @@ class mString {
         do {
         buf[len] = *(data++);
         } while (buf[len++] != 0);*/
-      if (length() + strlen(data) >= size) return *this;
+      if (size != -1 && length() + strlen(data) >= size) return *this;
       strcpy(buf + length(), data);
       return *this;
     }
     mString& add(const __FlashStringHelper *data) {
       PGM_P p = reinterpret_cast<PGM_P>(data);
-      if (length() + strlen_P(p) >= size) return *this;
+      if (size != -1 && length() + strlen_P(p) >= size) return *this;
       strcpy_P(buf + length(), p);
       return *this;
       /*do {
@@ -297,7 +299,7 @@ class mString {
 
     // convert & parse
     char operator [] (uint16_t index) const {
-      return (index < size ? buf[index] : 0);
+      return buf[index];//(index < size ? buf[index] : 0);
     }
     char& operator [] (uint16_t index) {
       return buf[index];
@@ -356,5 +358,5 @@ class mString {
       }
     }
   private:
-
 };
+#endif

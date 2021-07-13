@@ -5,7 +5,7 @@ void setupADC() {
 
   vol.setDt(700);
   vol.setPeriod(5);
-  vol.setWindow(map(MAX_LEDS, 300, 1200, 20, 1));
+  vol.setWindow(map(MAX_LEDS, 300, 900, 20, 1));
 
   low.setDt(0);
   low.setPeriod(0);
@@ -63,11 +63,11 @@ void checkAnalog() {
 
 void checkMusic() {
   vol.tick();
+  yield();
 #if (USE_CLAP == 1)
   clap.tick(vol.getRawMax());
   if (clap.hasClaps(2)) controlHandler(!cfg.state);
 #endif
-  yield();
   if (CUR_PRES.advMode == GL_ADV_LOW || CUR_PRES.advMode == GL_ADV_HIGH) {   // частоты
     int raw[FFT_SIZE], spectr[FFT_SIZE];
     for (int i = 0; i < FFT_SIZE; i++) raw[i] = analogRead(A0);

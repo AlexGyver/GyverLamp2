@@ -2,12 +2,20 @@ void effectsRoutine() {
   static byte prevEff = 255;
   if (!effTmr.isReady()) return;
 
-  if (dawnTmr.running()) {
-    fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, dawnTmr.getLength8(), scaleFF(dawnTmr.getLength8(), dawn.bright), LINEARBLEND));
-    drawClock(cfg.length / 2 - 4, 150, 0);
+  if (dawnTmr.running() || postDawn.running()) {
+    FastLED.setBrightness(255);
+    byte thisColor = dawnTmr.getLength8();
+    if (postDawn.running()) thisColor = 255;
+    fill_solid(leds, MAX_LEDS, ColorFromPalette(HeatColors_p, thisColor, scaleFF(thisColor, dawn.bright), LINEARBLEND));
+    drawClock(cfg.length / 2 - 4, 100, 0);
     FastLED.show();
     if (dawnTmr.isReady()) {
       dawnTmr.stop();
+      postDawn.setInterval(dawn.post * 60000ul);
+      postDawn.restart();
+    }
+    if (postDawn.isReady()) {
+      postDawn.stop();
       FastLED.clear();
       FastLED.show();
     }
@@ -19,12 +27,15 @@ void effectsRoutine() {
   byte thisScale = getScale();
   byte thisBright = getBright();
 
-  if (cfg.adcMode > 1) {    // музыка или яркость
+  if (musicMode() || briMode()) {    // музыка или яркость
     if (cfg.role) {         // мастер отправляет
-      static timerMillis adcSend(120, true);
-      if (adcSend.isReady() && millis() - udpTmr >= 1000) sendUDP(7, thisLength, thisScale, thisBright);
+      static uint32_t tmr = 0;
+      if ((millis() - tmr >= musicMode() ? 60 : 1000) && millis() - udpTmr >= 1000) {
+        sendUDP(7, thisLength, thisScale, thisBright);
+        tmr = millis();
+      }
     } else {                // слейв получает
-      if (millis() - gotADCtmr < 2000) {     // есть сигнал с мастера
+      if (millis() - gotADCtmr < 4000) {     // есть сигнал с мастера
         thisLength = udpLength;
         thisScale = udpScale;
         thisBright = udpBright;
@@ -46,6 +57,7 @@ void effectsRoutine() {
     prevEff = CUR_PRES.effect;
     loading = true;
   }
+  yield();
 
   // =================================================== ЭФФЕКТЫ ===================================================
   switch (CUR_PRES.effect) {
@@ -132,7 +144,8 @@ void effectsRoutine() {
       FOR_i(0, cfg.length * cfg.width) leds[i].fadeToBlackBy(70);
       {
         uint16_t rndVal = 0;
-        FOR_i(0, thisScale / 8 + 1) {
+        byte amount = (thisScale >> 3) + 1;
+        FOR_i(0, amount) {
           rndVal = rndVal * 2053 + 13849;     // random2053 алгоритм
           int homeX = inoise16(i * 100000000ul + (now.weekMs << 3) * CUR_PRES.speed / 255);
           homeX = map(homeX, 15000, 50000, 0, cfg.length);
@@ -146,9 +159,15 @@ void effectsRoutine() {
             int offsY = inoise8(i * 2500 + 30000 + (now.weekMs >> 1) * CUR_PRES.speed / 255) - 128;
             offsY = cfg.length / 2 * offsY / 128;
             int thisY = homeY + offsY;
-            setPix(thisX, thisY, CHSV(CUR_PRES.rnd ? rndVal : CUR_PRES.color, 255, 255));
+            setPix(thisX, thisY, CUR_PRES.fromPal ?
+                   ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(i * 255 / amount), 255, LINEARBLEND) :
+                   CHSV(CUR_PRES.color, 255, 255)
+                  );
           } else {
-            setLED(thisX, CHSV(CUR_PRES.rnd ? rndVal : CUR_PRES.color, 255, 255));
+            setLED(thisX, CUR_PRES.fromPal ?
+                   ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(i * 255 / amount), 255, LINEARBLEND) :
+                   CHSV(CUR_PRES.color, 255, 255)
+                  );
           }
         }
       }
@@ -204,27 +223,53 @@ void effectsRoutine() {
       break;
 
     case 8: // ================================== КОНФЕТТИ ==================================
-      FOR_i(0, (thisScale >> 3) + 1) {
-        int x = random(0, cfg.length * cfg.width);
-        if (leds[x] == CRGB(0, 0, 0)) leds[x] = CHSV(CUR_PRES.rnd ? random(0, 255) : CUR_PRES.color, 255, 255);
-      }
-      FOR_i(0, cfg.length * cfg.width) {
-        if (leds[i].r >= 10 || leds[i].g >= 10 || leds[i].b >= 10) leds[i].fadeToBlackBy(CUR_PRES.speed / 2 + 1);
-        else leds[i] = 0;
+      {
+        byte amount = (thisScale >> 3) + 1;
+        FOR_i(0, amount) {
+          int x = random(0, cfg.length * cfg.width);
+          if (leds[x] == CRGB(0, 0, 0)) leds[x] = CUR_PRES.fromPal ?
+                                                    ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(i * 255 / amount), 255, LINEARBLEND) :
+                                                    CHSV(CUR_PRES.color, 255, 255);
+        }
+        FOR_i(0, cfg.length * cfg.width) {
+          if (leds[i].r >= 10 || leds[i].g >= 10 || leds[i].b >= 10) leds[i].fadeToBlackBy(CUR_PRES.speed / 2 + 1);
+          else leds[i] = 0;
+        }
       }
       break;
-
-    case 9: // =================================== ЧАСЫ ===================================
+    case 9: // =================================== СМЕРЧ ===================================
       FastLED.clear();
-      drawClock(mapFF(CUR_PRES.scale, 0, cfg.length - 7), (255 - CUR_PRES.speed), CHSV(CUR_PRES.color, 255, 255));
-      break; 
+      FOR_k(0, (thisScale >> 5) + 1) {
+        FOR_i(0, cfg.length) {
+          //byte thisPos = inoise8(i * 10 - (now.weekMs >> 1) * CUR_PRES.speed / 255, k * 10000);
+          byte thisPos = inoise8(i * 10 + (now.weekMs >> 3) * CUR_PRES.speed / 255 + k * 10000, (now.weekMs >> 1) * CUR_PRES.speed / 255);
+          thisPos = map(thisPos, 50, 200, 0, cfg.width);
+          byte scale = 4;
+          FOR_j(0, scale) {
+            CRGB color = ColorFromPalette(paletteArr[CUR_PRES.palette - 1], scalePal(j * 255 / scale), (255 - j * 255 / (scale - 1)), LINEARBLEND);
+            if (j == 0) {
+              setPixOverlap(thisPos, i, color);
+            } else {
+              setPixOverlap(thisPos - j, i, color);
+              setPixOverlap(thisPos + j, i, color);
+            }
+          }
+        }
+      }
+      break;
 
-    case 10: // ================================= ПОГОДА ==================================
+    case 10: // =================================== ЧАСЫ ===================================
+      FastLED.clear();
+      drawClock(mapFF(CUR_PRES.scale, 0, cfg.length - 7), (CUR_PRES.speed < 10) ? 0 : (255 - CUR_PRES.speed), CHSV(CUR_PRES.color, 255, 255));
+      break;
+
+    case 11: // ================================= ПОГОДА ==================================
 
       break;
+
   }
 
-  if (CUR_PRES.advMode == GL_ADV_CLOCK && CUR_PRES.effect != 9) drawClock(mapFF(CUR_PRES.scale, 0, cfg.length - 7), 150, 0);
+  if (CUR_PRES.advMode == GL_ADV_CLOCK && CUR_PRES.effect != 9) drawClock(mapFF(CUR_PRES.scale, 0, cfg.length - 7), 100, 0);
   // выводим нажатия кнопки
   if (btnClicks > 0) fill_solid(leds, btnClicks, CRGB::White);
   if (brTicks > 0) fill_solid(leds, brTicks, CRGB::Cyan);
@@ -236,13 +281,16 @@ void effectsRoutine() {
 bool musicMode() {
   return ((cfg.adcMode == GL_ADC_MIC || cfg.adcMode == GL_ADC_BOTH) && (CUR_PRES.advMode > 1 && CUR_PRES.advMode <= 4));
 }
+bool briMode() {
+  return (cfg.adcMode == GL_ADC_BRI || cfg.adcMode == GL_ADC_BOTH);
+}
 
 byte getBright() {
   int maxBr = cfg.bright;   // макс яркость из конфига
   byte fadeBr = 255;
   if (CUR_PRES.fadeBright) fadeBr = CUR_PRES.bright; // ограничен вручную
 
-  if (cfg.adcMode == GL_ADC_BRI || cfg.adcMode == GL_ADC_BOTH) {    // ----> датчик света или оба
+  if (briMode()) {    // ----> датчик света или оба
     maxBr = constrain(phot.getFil(), cfg.minLight, cfg.maxLight);
     if (cfg.minLight != cfg.maxLight)
       maxBr = map(maxBr, cfg.minLight, cfg.maxLight, cfg.minBright, cfg.maxBright);
@@ -297,6 +345,13 @@ byte scalePal(byte val) {
 
 void setPix(int x, int y, CRGB color) {
   if (y >= 0 && y < cfg.length && x >= 0 && x < cfg.width) leds[getPix(x, y)] = color;
+}
+void setPixOverlap(int x, int y, CRGB color) {
+  if (y < 0) y += cfg.length;
+  if (x < 0) x += cfg.width;
+  if (y >= cfg.length) y -= cfg.length;
+  if (x >= cfg.width) x -= cfg.width;
+  setPix(x, y, color);
 }
 void setLED(int x, CRGB color) {
   if (x >= 0 && x < cfg.length) leds[x] = color;

@@ -29,6 +29,7 @@
 
 #define FOR_i(x,y)  for (int i = (x); i < (y); i++)
 #define FOR_j(x,y)  for (int j = (x); j < (y); j++)
+#define FOR_k(x,y)  for (int k = (x); k < (y); k++)
 #define CUR_PRES preset[cfg.curPreset]
 
 byte scaleFF(byte x, byte b) {
@@ -80,7 +81,7 @@ struct Config {
   int16_t length = 16;    // длина ленты
   int16_t width = 16;     // ширина матрицы
 
-  byte GMT = 3;           // часовой пояс +13
+  byte GMT = 16;          // часовой пояс +13
   uint32_t cityID = 1;    // city ID
   bool mqtt = 0;          // mqtt
   char mqttID[32];        //
@@ -118,20 +119,22 @@ struct Preset {
   byte scale = 100;       // масштаб (0.. 255)
   byte fromCenter = 0;    // эффект из центра (0/1)
   byte color = 0;         // цвет (0.. 255)
-  byte rnd = 0;           // случайный (0/1)
+  byte fromPal = 0;       // из палитры (0/1)
 };
 
-#define DAWN_SIZE 23
+#define DAWN_SIZE 24
 struct Dawn {
   byte state[7] = {0, 0, 0, 0, 0, 0, 0};  // (1/0)
   byte hour[7] = {0, 0, 0, 0, 0, 0, 0};   // (0.. 59)
   byte minute[7] = {0, 0, 0, 0, 0, 0, 0}; // (0.. 59)
   byte bright = 100;      // (0.. 255)
   byte time = 1;          // (5,10,15,20..)
+  byte post = 1;          // (5,10,15,20..)
 };
 
 /*
   - Каждые 5 минут лампа AP отправляет время (день час минута) на Local лампы всех ролей в сети с ней (GL,6,день,час,мин)
   - Если включен АЦП, Мастер отправляет своей группе данные с него на каждой итерации отрисовки эффектов (GL,1,длина,масштаб,яркость)
   - Установка времени с мобилы - получают все роли АР и Local (не получившие ntp)
+  - Каждую секунду устройства шлют посылку GL_ONL
 */
