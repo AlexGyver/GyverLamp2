@@ -64,8 +64,7 @@ void checkDawn() {
       DEBUG("dawn start ");
       DEBUGLN(dawn.time * 60000ul);
       dawnTmr.setInterval(dawn.time * 60000ul);
-      dawnTmr.restart();
-      FastLED.setBrightness(255);
+      dawnTmr.restart();      
     }
   }
 }
