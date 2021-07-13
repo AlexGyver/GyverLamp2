@@ -90,8 +90,8 @@ const char WiFiPassword[] = "12345678";
 //#define FASTLED_ALLOW_INTERRUPTS 0
 #include "data.h"         // данные
 #include "Time.h"         // часы
-#include "TimeRandom.h"   // случайные числа по времени
-//#include "FastRandom.h"   // быстрый рандом
+#include "timeRandom.h"   // случайные числа по времени
+//#include "fastRandom.h"   // быстрый рандом
 #include "Button.h"       // библа кнопки
 #include "palettes.h"     // палитры
 #include "NTPClient-Gyver.h"  // сервер времени (модиф)
