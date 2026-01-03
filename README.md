@@ -1,3 +1,10 @@
+# Изменения
+- теперь работает на esp32
+- FastLED обновлён до версии 3.10.3
+
+# Тестировалось на
+- supermini esp32c6
+
 # GyverLamp2
 ![Logo](/docs/banner2.png)
 

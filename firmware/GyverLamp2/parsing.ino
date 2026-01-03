@@ -1,7 +1,9 @@
-char buf[UDP_TX_PACKET_MAX_SIZE + 1];
+#include <HTTPUpdate.h>
+#define UDP_BUFFER_SIZE 1024
+char buf[UDP_BUFFER_SIZE + 1];
 void parsing() {
   if (Udp.parsePacket()) {
-    int n = Udp.read(buf, UDP_TX_PACKET_MAX_SIZE);
+    int n = Udp.read(buf, UDP_BUFFER_SIZE);
     buf[n] = NULL;
 
     // ПРЕ-ПАРСИНГ (для данных АЦП)
@@ -88,7 +90,7 @@ void parsing() {
               DEBUGLN(OTA);
               delay(100);
               WiFiClient client;
-              ESPhttpUpdate.update(client, OTA);
+              t_httpUpdate_return ret = httpUpdate.update(client, OTA);
             } break;
           case 13:                                        // выключить через
             if (data[3] == 0) turnoffTmr.stop();

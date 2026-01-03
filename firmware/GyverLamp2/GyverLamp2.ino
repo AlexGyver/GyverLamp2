@@ -25,24 +25,24 @@
 */
 
 // ---------- Настройки -----------
-#define GL_KEY "GL"         // ключ сети
+#define GL_KEY "GL"  // ключ сети
 
 // ------------ Кнопка -------------
-#define BTN_PIN 4           // пин кнопки GPIO4 (D2 на wemos/node), 0 для схемы с ESP-01
-#define USE_BTN 1           // 1 использовать кнопку, 0 нет
+#define BTN_PIN 4  // пин кнопки GPIO4 (D2 на wemos/node), 0 для схемы с ESP-01
+#define USE_BTN 1  // 1 использовать кнопку, 0 нет
 
 // ------------- АЦП --------------
-#define USE_ADC 1           // можно выпилить АЦП
-#define USE_CLAP 1          // два хлопка в ладоши вкл выкл лампу
-#define MIC_VCC 12          // питание микрофона GPIO12 (D6 на wemos/node)
-#define PHOT_VCC 14         // питание фоторезистора GPIO14 (D5 на wemos/node)
+#define USE_ADC 0    // можно выпилить АЦП
+#define USE_CLAP 1   // два хлопка в ладоши вкл выкл лампу
+#define MIC_VCC 12   // питание микрофона GPIO12 (D6 на wemos/node)
+#define PHOT_VCC 14  // питание фоторезистора GPIO14 (D5 на wemos/node)
 
 // ------------ Лента -------------
-#define STRIP_PIN 2         // пин ленты GPIO2 (D4 на wemos/node), GPIO5 (D1) для module
-#define MAX_LEDS 300        // макс. светодиодов
-#define STRIP_CHIP WS2812   // чип ленты
-#define STRIP_COLOR GRB     // порядок цветов в ленте
-#define STRIP_VOLT 5        // напряжение ленты, V
+#define STRIP_PIN 20       // пин ленты GPIO2 (D4 на wemos/node), GPIO5 (D1) для module
+#define MAX_LEDS 300       // макс. светодиодов
+#define STRIP_CHIP WS2812  // чип ленты
+#define STRIP_COLOR GRB    // порядок цветов в ленте
+#define STRIP_VOLT 5       // напряжение ленты, V
 /*
   WS2811, GBR, 12V
   WS2812, GRB, 5V
@@ -56,11 +56,11 @@ const char AP_NameChar[] = "GyverLamp2";
 const char WiFiPassword[] = "12345678";
 
 // ------------ Прочее -------------
-#define GL_VERSION 23       // код версии прошивки
-#define EE_TOUT 30000       // таймаут сохранения епром после изменения, мс
-#define DEBUG_SERIAL_LAMP   // закомментируй чтобы выключить отладку (скорость 115200)
-#define EE_KEY 56           // ключ сброса eeprom
-#define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
+#define GL_VERSION 32      // код версии прошивки
+#define EE_TOUT 30000      // таймаут сохранения епром после изменения, мс
+#define DEBUG_SERIAL_LAMP  // закомментируй чтобы выключить отладку (скорость 115200)
+#define EE_KEY 56          // ключ сброса eeprom
+#define NTP_UPD_PRD 5      // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
 // ------------ БИЛДЕР -------------
@@ -89,23 +89,23 @@ const char WiFiPassword[] = "12345678";
 
 // ---------- БИБЛИОТЕКИ -----------
 //#define FASTLED_ALLOW_INTERRUPTS 0
-#include "data.h"         // данные
-#include "Time.h"         // часы
-#include "timeRandom.h"   // случайные числа по времени
+#include "data.h"        // данные
+#include "Time.h"        // часы
+#include "timeRandom.h"  // случайные числа по времени
 //#include "fastRandom.h"   // быстрый рандом
-#include "Button.h"       // библа кнопки
-#include "palettes.h"     // палитры
+#include "Button.h"           // библа кнопки
+#include "palettes.h"         // палитры
 #include "NTPClient-Gyver.h"  // сервер времени (модиф)
-#include "timerMillis.h"  // таймер миллис
-#include "VolAnalyzer.h"  // анализатор громкости
-#include "FFT_C.h"        // фурье
-#include <FastLED.h>      // лента
-#include <ESP8266WiFi.h>  // базовая либа есп
-#include <WiFiUdp.h>      // общение по UDP
-#include <EEPROM.h>       // епром
-#include "ESP8266httpUpdate.h"  // OTA
-#include "mString.h"      // стринг билдер
-#include "Clap.h"         // обработка хлопков
+#include "timerMillis.h"      // таймер миллис
+#include "VolAnalyzer.h"      // анализатор громкости
+#include "FFT_C.h"            // фурье
+#include <FastLED.h>          // лента
+#include <WiFi.h>             // базовая либа есп
+#include <WiFiUdp.h>          // общение по UDP
+#include <EEPROM.h>           // епром
+#include "Update.h"           // OTA
+#include "mString.h"          // стринг билдер
+#include "Clap.h"             // обработка хлопков
 
 // ------------------- ДАТА --------------------
 Config cfg;
@@ -139,41 +139,41 @@ byte udpScale = 0, udpBright = 0;
 // ------------------- SETUP --------------------
 void setup() {
   misc();
-  delay(2000);          // ждём старта есп
+  delay(2000);  // ждём старта есп
 #ifdef DEBUG_SERIAL_LAMP
   Serial.begin(115200);
   DEBUGLN();
 #endif
-  startStrip();         // старт ленты
-  btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
-  EE_startup();         // читаем епром
+  startStrip();                        // старт ленты
+  btn.setLevel(digitalRead(BTN_PIN));  // смотрим что за кнопка
+  EE_startup();                        // читаем епром
 #ifndef SKIP_WIFI
-  checkUpdate();        // индикация было ли обновление
-  showRGB();            // показываем ргб
-  checkGroup();         // показываем или меняем адрес
-  checkButton();        // проверяем кнопку на удержание
-  startWiFi();          // старт вайфай
-  setupTime();          // выставляем время
+  checkUpdate();  // индикация было ли обновление
+  showRGB();      // показываем ргб
+  checkGroup();   // показываем или меняем адрес
+  checkButton();  // проверяем кнопку на удержание
+  startWiFi();    // старт вайфай
+  setupTime();    // выставляем время
 #endif
-  setupADC();           // настраиваем анализ
-  presetRotation(true); // форсировать смену режима
+  setupADC();            // настраиваем анализ
+  presetRotation(true);  // форсировать смену режима
 }
 
 void loop() {
-  timeTicker();       // обновляем время
+  timeTicker();  // обновляем время
   yield();
 #ifndef SKIP_WIFI
-  tryReconnect();     // пробуем переподключиться если WiFi упал
+  tryReconnect();  // пробуем переподключиться если WiFi упал
   yield();
-  parsing();          // ловим данные
+  parsing();  // ловим данные
   yield();
 #endif
   checkEEupdate();    // сохраняем епром
   presetRotation(0);  // смена режимов по расписанию
   effectsRoutine();   // мигаем
   yield();
-  button();           // проверяем кнопку
-  checkAnalog();      // чтение звука и датчика
+  button();       // проверяем кнопку
+  checkAnalog();  // чтение звука и датчика
   yield();
   iAmOnline();
 }
