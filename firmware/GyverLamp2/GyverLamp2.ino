@@ -63,6 +63,15 @@ const char WiFiPassword[] = "12345678";
 #define NTP_UPD_PRD 5       // период обновления времени с NTP сервера, минут
 //#define SKIP_WIFI         // пропустить подключение к вафле (для отладки)
 
+#ifdef ESP32
+#ifndef A0
+#define A0 36
+#endif
+#ifndef UDP_TX_PACKET_MAX_SIZE
+#define UDP_TX_PACKET_MAX_SIZE 8192
+#endif
+#endif
+
 // ------------ БИЛДЕР -------------
 #define GL_BUILD 0  // 0: com 300, 1: com 900, 2: esp1 300, 3: esp1 900, 4: module 300, 5: module 900
 
@@ -100,10 +109,15 @@ const char WiFiPassword[] = "12345678";
 #include "VolAnalyzer.h"  // анализатор громкости
 #include "FFT_C.h"        // фурье
 #include <FastLED.h>      // лента
+#ifdef ESP32
+#include <WiFi.h>
+#include <HTTPUpdate.h>
+#else
 #include <ESP8266WiFi.h>  // базовая либа есп
+#include "ESP8266httpUpdate.h"  // OTA
+#endif
 #include <WiFiUdp.h>      // общение по UDP
 #include <EEPROM.h>       // епром
-#include "ESP8266httpUpdate.h"  // OTA
 #include "mString.h"      // стринг билдер
 #include "Clap.h"         // обработка хлопков
 

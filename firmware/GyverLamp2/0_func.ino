@@ -1,6 +1,6 @@
 void sendUDP(char *data) {
   Udp.beginPacket(broadIP, portNum + cfg.group);
-  Udp.write(data);
+  Udp.write((const uint8_t*)data, strlen(data));
   Udp.endPacket();
 }
 void sendUDP(byte cmd, int data1 = 0, int data2 = 0, int data3 = 0) {

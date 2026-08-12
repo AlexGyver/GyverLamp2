@@ -88,7 +88,11 @@ void parsing() {
               DEBUGLN(OTA);
               delay(100);
               WiFiClient client;
+#ifdef ESP32
+              httpUpdate.update(client, OTA);
+#else
               ESPhttpUpdate.update(client, OTA);
+#endif
             } break;
           case 13:                                        // выключить через
             if (data[3] == 0) turnoffTmr.stop();
