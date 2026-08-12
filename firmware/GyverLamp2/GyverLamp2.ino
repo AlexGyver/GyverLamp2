@@ -99,7 +99,7 @@ const char WiFiPassword[] = "12345678";
 // ---------- БИБЛИОТЕКИ -----------
 //#define FASTLED_ALLOW_INTERRUPTS 0
 #include "data.h"         // данные
-#include "Time.h"         // часы
+#include "LampTime.h"     // часы
 #include "timeRandom.h"   // случайные числа по времени
 //#include "fastRandom.h"   // быстрый рандом
 #include "Button.h"       // библа кнопки

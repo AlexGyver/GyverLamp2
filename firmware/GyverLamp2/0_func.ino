@@ -6,7 +6,14 @@ void sendUDP(char *data) {
 void sendUDP(byte cmd, int data1 = 0, int data2 = 0, int data3 = 0) {
   char reply[20] = "";
   mString packet(reply);
-  packet = packet + "GL," + cmd + ',' + data1 + ',' + data2 + ',' + data3;
+  packet += "GL,";
+  packet += (uint32_t)cmd;
+  packet += ',';
+  packet += (int32_t)data1;
+  packet += ',';
+  packet += (int32_t)data2;
+  packet += ',';
+  packet += (int32_t)data3;
   sendUDP(reply);
   //DEBUG("Sending: ");
   //DEBUGLN(cmd);

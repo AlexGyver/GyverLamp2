@@ -192,7 +192,10 @@ void sendToSlaves(byte data1, byte data2) {
     char reply[15];
     mString packet(reply);
     packet.clear();
-    packet = packet + "GL,4," + data1 + ',' + data2;
+    packet += "GL,4,";
+    packet += (uint32_t)data1;
+    packet += ',';
+    packet += (uint32_t)data2;
 
     DEBUG("Sending to Slaves: ");
     DEBUGLN(reply);
